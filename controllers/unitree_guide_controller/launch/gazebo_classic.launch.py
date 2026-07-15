@@ -4,7 +4,13 @@ import xml.etree.ElementTree as ET
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+    SetEnvironmentVariable,
+)
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -27,7 +33,13 @@ def launch_setup(context, *args, **kwargs):
 
     package_description = context.launch_configurations['pkg_description']
     init_height = context.launch_configurations['height']
+    world = context.launch_configurations['world']
     pkg_path = os.path.join(get_package_share_directory(package_description))
+
+    if not world:
+        package_world = os.path.join(pkg_path, 'worlds', 'gazebo.world')
+        if os.path.isfile(package_world):
+            world = package_world
 
     xacro_file = os.path.join(pkg_path, 'xacro', 'robot.xacro')
     robot_description = compact_xml(
@@ -45,11 +57,15 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
+    gazebo_arguments = {"verbose": "false"}
+    if world:
+        gazebo_arguments["world"] = world
+
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [PathJoinSubstitution([FindPackageShare("gazebo_ros"), "launch", "gazebo.launch.py"])]
         ),
-        launch_arguments={"verbose": "false"}.items(),
+        launch_arguments=gazebo_arguments.items(),
     )
 
     spawn_entity = Node(
@@ -103,6 +119,7 @@ def launch_setup(context, *args, **kwargs):
     return [
         rviz,
         robot_state_publisher,
+        SetEnvironmentVariable('GAZEBO_MODEL_DATABASE_URI', ''),
         gazebo,
         spawn_entity,
         leg_pd_controller,
@@ -134,9 +151,16 @@ def generate_launch_description():
         description='Start RViz together with Gazebo'
     )
 
+    world = DeclareLaunchArgument(
+        'world',
+        default_value='',
+        description='Gazebo world file; defaults to worlds/gazebo.world from the description package'
+    )
+
     return LaunchDescription([
         pkg_description,
         height,
         rviz,
+        world,
         OpaqueFunction(function=launch_setup),
     ])
