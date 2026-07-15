@@ -20,7 +20,11 @@ void FeetEndCalc::init() {
     t_stance_ = ctrl_component_.wave_generator_->get_t_stance();
     t_swing_ = ctrl_component_.wave_generator_->get_t_swing();
 
-    Vec34 feet_pos_body = estimator_->getFeetPos2Body();
+    Vec34 feet_pos_body;
+    const std::vector<KDL::Frame> feet_frames = robot_model_->getFeet2BPositions();
+    for (int i(0); i < 4; ++i) {
+        feet_pos_body.col(i) = Vec3(feet_frames[i].p.data);
+    }
     // Vec34 feet_pos_body = robot_model_.feet_pos_normal_stand_;
     for (int i(0); i < 4; ++i) {
         feet_radius_(i) =

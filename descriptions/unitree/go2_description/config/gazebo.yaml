@@ -113,7 +113,7 @@ ocs2_quadruped_controller:
 
 unitree_guide_controller:
   ros__parameters:
-    update_rate: 200  # Hz
+    update_rate: 500  # Hz
     command_prefix: "leg_pd_controller"
     joints:
       - FR_hip_joint
