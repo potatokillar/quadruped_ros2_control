@@ -4,6 +4,7 @@
 
   <xacro:arg name="GAZEBO" default="false"/>
   <xacro:arg name="CLASSIC" default="false"/>
+  <xacro:arg name="SIMPLIFIED_VISUALS" default="false"/>
 
   <link name="base">
     <visual>

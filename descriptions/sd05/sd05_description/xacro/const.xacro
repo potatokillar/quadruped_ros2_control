@@ -2,13 +2,13 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="sd05_visual" params="mesh color mesh_xyz simple_xyz simple_rpy *simple_geometry">
     <visual>
-      <xacro:if value="$(arg GAZEBO)">
+      <xacro:if value="$(arg SIMPLIFIED_VISUALS)">
         <origin xyz="${simple_xyz}" rpy="${simple_rpy}" />
         <geometry>
           <xacro:insert_block name="simple_geometry" />
         </geometry>
       </xacro:if>
-      <xacro:unless value="$(arg GAZEBO)">
+      <xacro:unless value="$(arg SIMPLIFIED_VISUALS)">
         <origin xyz="${mesh_xyz}" rpy="0 0 0" />
         <geometry>
           <mesh filename="${mesh}" />
