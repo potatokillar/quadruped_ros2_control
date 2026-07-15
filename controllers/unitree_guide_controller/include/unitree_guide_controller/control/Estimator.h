@@ -7,6 +7,7 @@
 #include <memory>
 #include <kdl/frames.hpp>
 #include <unitree_guide_controller/common/mathTypes.h>
+#include <unitree_guide_controller/common/mathTools.h>
 #include <unitree_guide_controller/robot/QuadrupedRobot.h>
 #include "LowPassFilter.h"
 
@@ -63,10 +64,14 @@ public:
      * @return feet velocity in world frame
      */
     Vec34 getFeetVel() {
+        const std::vector<KDL::Frame> feet_pos = robot_model_->getFeet2BPositions();
         const std::vector<KDL::Vector> feet_vel = robot_model_->getFeet2BVelocities();
         Vec34 result;
         for (int i(0); i < 4; ++i) {
-            result.col(i) = Vec3(feet_vel[i].data) + getVelocity();
+            const Vec3 foot_pos_body(feet_pos[i].p.data);
+            const Vec3 foot_vel_body(feet_vel[i].data);
+            result.col(i) = getVelocity() +
+                            rotation_ * (foot_vel_body + skew(gyro_) * foot_pos_body);
         }
         return result;
     }
