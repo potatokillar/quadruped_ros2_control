@@ -4,7 +4,7 @@ project(sd05_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-        DIRECTORY meshes urdf config launch textures
+        DIRECTORY meshes urdf xacro config launch textures
         DESTINATION share/${PROJECT_NAME}/
 )
 
