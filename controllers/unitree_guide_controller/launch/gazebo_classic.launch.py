@@ -1,14 +1,27 @@
 import os
+import xml.etree.ElementTree as ET
 
 import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, RegisterEventHandler
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+
+
+def compact_xml(xml):
+    root = ET.fromstring(xml)
+    for element in root.iter():
+        if element.text is not None and not element.text.strip():
+            element.text = None
+        if element.tail is not None and not element.tail.strip():
+            element.tail = None
+    return ET.tostring(root, encoding='unicode')
+
 
 def launch_setup(context, *args, **kwargs):
 
@@ -17,7 +30,9 @@ def launch_setup(context, *args, **kwargs):
     pkg_path = os.path.join(get_package_share_directory(package_description))
 
     xacro_file = os.path.join(pkg_path, 'xacro', 'robot.xacro')
-    robot_description = xacro.process_file(xacro_file, mappings={'GAZEBO': 'true', 'CLASSIC': 'true'}).toxml()
+    robot_description = compact_xml(
+        xacro.process_file(xacro_file, mappings={'GAZEBO': 'true', 'CLASSIC': 'true'}).toxml()
+    )
 
     rviz_config_file = os.path.join(get_package_share_directory(package_description), "config", "visualize_urdf.rviz")
 
@@ -26,7 +41,8 @@ def launch_setup(context, *args, **kwargs):
         executable='rviz2',
         name='rviz_ocs2',
         output='screen',
-        arguments=["-d", rviz_config_file]
+        arguments=["-d", rviz_config_file],
+        condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
     gazebo = IncludeLaunchDescription(
@@ -112,8 +128,15 @@ def generate_launch_description():
         description='Init height in simulation'
     )
 
+    rviz = DeclareLaunchArgument(
+        'rviz',
+        default_value='false',
+        description='Start RViz together with Gazebo'
+    )
+
     return LaunchDescription([
         pkg_description,
         height,
+        rviz,
         OpaqueFunction(function=launch_setup),
     ])
