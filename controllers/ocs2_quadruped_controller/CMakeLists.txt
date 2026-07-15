@@ -8,6 +8,8 @@ endif ()
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(BUILD_PERCEPTIVE "Build perceptive locomotion support" OFF)
+
 set(CONTROLLER_INCLUDE_DEPENDS
         pluginlib
         rcpputils
@@ -22,19 +24,9 @@ set(CONTROLLER_INCLUDE_DEPENDS
         qpoases_colcon
         ament_index_cpp
 
-        convex_plane_decomposition_msgs
-        convex_plane_decomposition_ros
-        grid_map_sdf
-        ocs2_sphere_approximation
 )
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-foreach (Dependency IN ITEMS ${CONTROLLER_INCLUDE_DEPENDS})
-    find_package(${Dependency} REQUIRED)
-endforeach ()
-
-add_library(${PROJECT_NAME} SHARED
+set(CONTROLLER_SOURCES
         src/Ocs2QuadrupedController.cpp
         src/FSM/StateOCS2.cpp
 
@@ -62,18 +54,41 @@ add_library(${PROJECT_NAME} SHARED
         src/control/GaitManager.cpp
         src/control/TargetManager.cpp
         src/control/CtrlComponent.cpp
-
-        src/perceptive/constraint/FootCollisionConstraint.cpp
-        src/perceptive/constraint/FootPlacementConstraint.cpp
-        src/perceptive/constraint/SphereSdfConstraint.cpp
-        src/perceptive/interface/ConvexRegionSelector.cpp
-        src/perceptive/interface/PerceptiveLeggedInterface.cpp
-        src/perceptive/interface/PerceptiveLeggedPrecomputation.cpp
-        src/perceptive/interface/PerceptiveLeggedReferenceManager.cpp
-        src/perceptive/visualize/FootPlacementVisualization.cpp
-        src/perceptive/visualize/SphereVisualization.cpp
-        src/perceptive/synchronize/PlanarTerrainReceiver.cpp
 )
+
+if (BUILD_PERCEPTIVE)
+    list(APPEND CONTROLLER_INCLUDE_DEPENDS
+            convex_plane_decomposition_msgs
+            convex_plane_decomposition_ros
+            grid_map_sdf
+            ocs2_sphere_approximation
+    )
+    list(APPEND CONTROLLER_SOURCES
+            src/perceptive/constraint/FootCollisionConstraint.cpp
+            src/perceptive/constraint/FootPlacementConstraint.cpp
+            src/perceptive/constraint/SphereSdfConstraint.cpp
+            src/perceptive/interface/ConvexRegionSelector.cpp
+            src/perceptive/interface/PerceptiveLeggedInterface.cpp
+            src/perceptive/interface/PerceptiveLeggedPrecomputation.cpp
+            src/perceptive/interface/PerceptiveLeggedReferenceManager.cpp
+            src/perceptive/visualize/FootPlacementVisualization.cpp
+            src/perceptive/visualize/SphereVisualization.cpp
+            src/perceptive/synchronize/PlanarTerrainReceiver.cpp
+    )
+endif ()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+foreach (Dependency IN ITEMS ${CONTROLLER_INCLUDE_DEPENDS})
+    find_package(${Dependency} REQUIRED)
+endforeach ()
+
+add_library(${PROJECT_NAME} SHARED ${CONTROLLER_SOURCES})
+if (BUILD_PERCEPTIVE)
+    # CtrlComponent.h changes its public class definition based on this macro,
+    # so consumers must compile with the same definition as the library.
+    target_compile_definitions(${PROJECT_NAME} PUBLIC OCS2_PERCEPTIVE_SUPPORT)
+endif ()
 target_include_directories(${PROJECT_NAME}
         PUBLIC
         ${qpOASES_INCLUDE_DIR}

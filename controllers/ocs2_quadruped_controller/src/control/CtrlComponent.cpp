@@ -16,9 +16,11 @@
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
 #include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_quadruped_controller/control/GaitManager.h>
+#ifdef OCS2_PERCEPTIVE_SUPPORT
 #include <ocs2_quadruped_controller/perceptive/interface/PerceptiveLeggedInterface.h>
 #include <ocs2_quadruped_controller/perceptive/interface/PerceptiveLeggedReferenceManager.h>
 #include <ocs2_quadruped_controller/perceptive/synchronize/PlanarTerrainReceiver.h>
+#endif
 #include <ocs2_sqp/SqpMpc.h>
 
 namespace ocs2::legged_robot
@@ -34,7 +36,14 @@ namespace ocs2::legged_robot
             node_->declare_parameter("enable_perceptive", enable_perceptive_);
         }
         enable_perceptive_ = node_->get_parameter("enable_perceptive").as_bool();
-
+#ifndef OCS2_PERCEPTIVE_SUPPORT
+        if (enable_perceptive_)
+        {
+            RCLCPP_WARN(node_->get_logger(),
+                        "Perceptive locomotion support is not built; disabling enable_perceptive.");
+            enable_perceptive_ = false;
+        }
+#endif
 
         const std::string package_share_directory = ament_index_cpp::get_package_share_directory(robot_pkg_);
         urdf_file_ = package_share_directory + "/urdf/robot.urdf";
@@ -110,11 +119,13 @@ namespace ocs2::legged_robot
         observation_.mode = estimator_->getMode();
 
         visualizer_->update(observation_);
+#ifdef OCS2_PERCEPTIVE_SUPPORT
         if (enable_perceptive_)
         {
             footPlacementVisualizationPtr_->update(observation_);
             sphereVisualizationPtr_->update(observation_);
         }
+#endif
 
         // Compute target trajectory
         target_manager_->update(observation_);
@@ -147,11 +158,13 @@ namespace ocs2::legged_robot
 
     void CtrlComponent::setupLeggedInterface()
     {
+#ifdef OCS2_PERCEPTIVE_SUPPORT
         if (enable_perceptive_)
         {
             legged_interface_ = std::make_unique<PerceptiveLeggedInterface>(task_file_, urdf_file_, reference_file_);
         }
         else
+#endif
         {
             legged_interface_ = std::make_unique<LeggedInterface>(task_file_, urdf_file_, reference_file_);
         }
@@ -159,6 +172,7 @@ namespace ocs2::legged_robot
         legged_interface_->setupJointNames(joint_names_, feet_names_);
         legged_interface_->setupOptimalControlProblem(task_file_, urdf_file_, reference_file_, verbose_);
 
+#ifdef OCS2_PERCEPTIVE_SUPPORT
         if (enable_perceptive_)
         {
             footPlacementVisualizationPtr_ = std::make_unique<FootPlacementVisualization>(
@@ -170,6 +184,7 @@ namespace ocs2::legged_robot
                 legged_interface_->getPinocchioInterface(), legged_interface_->getCentroidalModelInfo(),
                 *dynamic_cast<PerceptiveLeggedInterface&>(*legged_interface_).getPinocchioSphereInterfacePtr(), node_);
         }
+#endif
     }
 
     /**
@@ -197,6 +212,7 @@ namespace ocs2::legged_robot
                                                           task_file_,
                                                           reference_file_);
 
+#ifdef OCS2_PERCEPTIVE_SUPPORT
         if (enable_perceptive_)
         {
             const auto planarTerrainReceiver =
@@ -206,6 +222,7 @@ namespace ocs2::legged_robot
                     "/convex_plane_decomposition_ros/planar_terrain", "elevation");
             mpc_->getSolverPtr()->addSynchronizedModule(planarTerrainReceiver);
         }
+#endif
     }
 
     void CtrlComponent::setupMrt()
