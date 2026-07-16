@@ -17,6 +17,7 @@
 #include <gz/msgs/imu.pb.h>
 #include <gz/msgs/wrench.pb.h>
 
+#include <cmath>
 #include <limits>
 #include <map>
 #include <memory>
@@ -135,11 +136,14 @@ public:
     /// \brief handles to the force torque from within Gazebo
     sim::Entity sim_ft_sensors_ = sim::kNullEntity;
 
+    /// \brief parent joint that owns the force-torque sensor
+    sim::Entity sim_joint_ = sim::kNullEntity;
+
     /// \brief An array per FT
-    std::array<double, 6> ft_sensor_data_;
+    std::array<double, 6> ft_sensor_data_{};
 
     /// \brief  Current foot end effort
-    double foot_effort;
+    double foot_effort{0.0};
 
     /// \brief callback to get the Force Torque topic values
     void OnForceTorque(const GZ_MSGS_NAMESPACE Wrench& _msg);
@@ -501,10 +505,12 @@ namespace gz_quadruped_hardware
 
         // Foot Force torque sensor
         this->dataPtr->ecm->Each<sim::components::ForceTorque,
-                                 sim::components::Name>(
+                                 sim::components::Name,
+                                 sim::components::ParentEntity>(
             [&](const sim::Entity& _entity,
-                const sim::components::ForceTorque*,
-                const sim::components::Name* _name) -> bool
+                const sim::components::ForceTorque* _forceTorque,
+                const sim::components::Name* _name,
+                const sim::components::ParentEntity* _parent) -> bool
             {
                 auto ftData = std::make_shared<ForceTorqueData>();
                 RCLCPP_INFO_STREAM(this->nh_->get_logger(), "Loading Foot Force sensor: " << _name->Data());
@@ -517,6 +523,35 @@ namespace gz_quadruped_hardware
                 }
                 ftData->name = _name->Data();
                 ftData->sim_ft_sensors_ = _entity;
+                ftData->sim_joint_ = _parent->Data();
+                if (!this->dataPtr->ecm->EntityHasComponentType(
+                    ftData->sim_joint_, sim::components::JointTransmittedWrench().TypeId()))
+                {
+                    this->dataPtr->ecm->CreateComponent(
+                        ftData->sim_joint_, sim::components::JointTransmittedWrench());
+                }
+                const auto* parentName = this->dataPtr->ecm->Component<sim::components::Name>(ftData->sim_joint_);
+                if (parentName)
+                {
+                    RCLCPP_INFO_STREAM(
+                        this->nh_->get_logger(), "ForceTorque " << ftData->name <<
+                        " is attached to joint: " << parentName->Data());
+                }
+                ftData->topicName = _forceTorque->Data().Topic();
+                if (!ftData->topicName.empty())
+                {
+                    RCLCPP_INFO_STREAM(
+                        this->nh_->get_logger(), "ForceTorque " << ftData->name <<
+                        " uses configured topic: " << ftData->topicName);
+                    if (!this->dataPtr->node.Subscribe(
+                        ftData->topicName, &ForceTorqueData::OnForceTorque, ftData.get()))
+                    {
+                        RCLCPP_ERROR_STREAM(
+                            this->nh_->get_logger(), "Failed to subscribe ForceTorque " << ftData->name <<
+                            " to topic " << ftData->topicName);
+                        ftData->topicName.clear();
+                    }
+                }
                 this->dataPtr->state_interfaces_.emplace_back(
                     "foot_force",
                     ftData->name,
@@ -641,6 +676,15 @@ namespace gz_quadruped_hardware
 
         for (unsigned int i = 0; i < this->dataPtr->ft_sensors_.size(); ++i)
         {
+            const auto* jointWrench = this->dataPtr->ecm->Component<sim::components::JointTransmittedWrench>(
+                this->dataPtr->ft_sensors_[i]->sim_joint_);
+            if (jointWrench)
+            {
+                const auto& force = jointWrench->Data().force();
+                this->dataPtr->ft_sensors_[i]->foot_effort = std::sqrt(
+                    force.x() * force.x() + force.y() * force.y() + force.z() * force.z());
+            }
+
             if (this->dataPtr->ft_sensors_[i]->topicName.empty())
             {
                 auto sensorTopicComp = this->dataPtr->ecm->Component<
