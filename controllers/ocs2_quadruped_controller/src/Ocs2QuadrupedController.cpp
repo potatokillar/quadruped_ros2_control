@@ -145,6 +145,9 @@ namespace ocs2::legged_robot
             auto_declare<std::vector<std::string>>("command_interfaces", command_interface_types_);
         state_interface_types_ =
             auto_declare<std::vector<std::string>>("state_interfaces", state_interface_types_);
+        stand_pos_ = auto_declare<std::vector<double>>("stand_pos", stand_pos_);
+        stand_kp_ = auto_declare<double>("stand_kp", stand_kp_);
+        stand_kd_ = auto_declare<double>("stand_kd", stand_kd_);
 
         // IMU Sensor
         imu_name_ = auto_declare<std::string>("imu_name", imu_name_);
@@ -166,7 +169,9 @@ namespace ocs2::legged_robot
         ctrl_comp_->setupStateEstimate(estimator_type_);
 
         state_list_.passive = std::make_shared<StatePassive>(ctrl_interfaces_);
-        state_list_.fixedDown = std::make_shared<StateOCS2>(ctrl_interfaces_, ctrl_comp_);
+        state_list_.standUp = std::make_shared<StateStandUp>(
+            ctrl_interfaces_, stand_pos_, stand_kp_, stand_kd_);
+        state_list_.ocs2 = std::make_shared<StateOCS2>(ctrl_interfaces_, ctrl_comp_);
 
         return CallbackReturn::SUCCESS;
     }
@@ -283,7 +288,10 @@ namespace ocs2::legged_robot
         case FSMStateName::PASSIVE:
             return state_list_.passive;
         case FSMStateName::FIXEDDOWN:
-            return state_list_.fixedDown;
+        case FSMStateName::FIXEDSTAND:
+            return state_list_.standUp;
+        case FSMStateName::OCS2:
+            return state_list_.ocs2;
         default:
             return state_list_.invalid;
         }

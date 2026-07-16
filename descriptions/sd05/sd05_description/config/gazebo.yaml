@@ -57,6 +57,21 @@ ocs2_quadruped_controller:
     robot_pkg: "sd05_description"
     default_kd: 5.5
     feet_force_threshold: 4.0
+    stand_kp: 80.0
+    stand_kd: 3.5
+    stand_pos:
+      - 0.0
+      - 0.67
+      - -1.3
+      - 0.0
+      - 0.67
+      - -1.3
+      - 0.0
+      - 0.67
+      - -1.3
+      - 0.0
+      - 0.67
+      - -1.3
     joints:
       - FL_hip_joint
       - FL_thigh_joint
@@ -107,8 +122,8 @@ ocs2_quadruped_controller:
     foot_force_name: "foot_force"
     foot_force_interfaces:
       - FL_foot_force
-      - RL_foot_force
       - FR_foot_force
+      - RL_foot_force
       - RR_foot_force
 
 unitree_guide_controller:

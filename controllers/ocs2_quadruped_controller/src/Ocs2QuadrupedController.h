@@ -10,6 +10,7 @@
 #include <control_input_msgs/msg/inputs.hpp>
 #include <control_msgs/msg/dynamic_joint_state.hpp>
 #include <ocs2_quadruped_controller/FSM/StateOCS2.h>
+#include <ocs2_quadruped_controller/FSM/StateStandUp.h>
 #include <ocs2_quadruped_controller/control/CtrlComponent.h>
 #include <realtime_tools/realtime_publisher.hpp>
 
@@ -17,7 +18,8 @@ namespace ocs2::legged_robot {
     struct FSMStateList {
         std::shared_ptr<FSMState> invalid;
         std::shared_ptr<StatePassive> passive;
-        std::shared_ptr<StateOCS2> fixedDown;
+        std::shared_ptr<StateStandUp> standUp;
+        std::shared_ptr<StateOCS2> ocs2;
     };
 
     class Ocs2QuadrupedController final : public controller_interface::ControllerInterface {
@@ -71,6 +73,14 @@ namespace ocs2::legged_robot {
         std::vector<std::string> joint_names_;
         std::vector<std::string> command_interface_types_;
         std::vector<std::string> state_interface_types_;
+        std::vector<double> stand_pos_ = {
+            0.0, 0.67, -1.3,
+            0.0, 0.67, -1.3,
+            0.0, 0.67, -1.3,
+            0.0, 0.67, -1.3
+        };
+        double stand_kp_ = 80.0;
+        double stand_kd_ = 3.5;
 
         std::unordered_map<
             std::string, std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface> > *>

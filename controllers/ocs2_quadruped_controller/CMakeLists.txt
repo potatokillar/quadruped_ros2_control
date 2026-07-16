@@ -33,6 +33,7 @@ set(CONTROLLER_INCLUDE_DEPENDS
 set(CONTROLLER_SOURCES
         src/Ocs2QuadrupedController.cpp
         src/FSM/StateOCS2.cpp
+        src/FSM/StateStandUp.cpp
 
         src/estimator/GroundTruth.cpp
         src/estimator/LinearKalmanFilter.cpp
