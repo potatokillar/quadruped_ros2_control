@@ -8,8 +8,10 @@
 #include <controller_common/FSM/StatePassive.h>
 #include <controller_interface/controller_interface.hpp>
 #include <control_input_msgs/msg/inputs.hpp>
+#include <control_msgs/msg/dynamic_joint_state.hpp>
 #include <ocs2_quadruped_controller/FSM/StateOCS2.h>
 #include <ocs2_quadruped_controller/control/CtrlComponent.h>
+#include <realtime_tools/realtime_publisher.hpp>
 
 namespace ocs2::legged_robot {
     struct FSMStateList {
@@ -54,6 +56,8 @@ namespace ocs2::legged_robot {
     protected:
 
         std::shared_ptr<FSMState> getNextState(FSMStateName stateName) const;
+
+        void publishCommandTelemetry(const rclcpp::Time& time);
 
         FSMMode mode_ = FSMMode::NORMAL;
         std::string state_name_;
@@ -101,6 +105,9 @@ namespace ocs2::legged_robot {
         std::vector<std::string> odom_interface_types_;
 
         rclcpp::Subscription<control_input_msgs::msg::Inputs>::SharedPtr control_input_subscription_;
+        std::shared_ptr<realtime_tools::RealtimePublisher<control_msgs::msg::DynamicJointState>>
+            command_telemetry_publisher_;
+        double last_command_telemetry_time_{-1.0};
     };
 }
 

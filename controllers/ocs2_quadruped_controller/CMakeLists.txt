@@ -15,10 +15,14 @@ set(CONTROLLER_INCLUDE_DEPENDS
         rcpputils
         controller_interface
         controller_common
+        realtime_tools
 
         ocs2_legged_robot_ros
         ocs2_self_collision
         control_input_msgs
+        control_msgs
+        diagnostic_msgs
+        ocs2_msgs
         angles
         nav_msgs
         qpoases_colcon

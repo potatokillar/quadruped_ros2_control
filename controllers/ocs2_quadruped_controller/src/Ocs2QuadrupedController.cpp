@@ -98,7 +98,39 @@ namespace ocs2::legged_robot
             mode_ = FSMMode::NORMAL;
         }
 
+        publishCommandTelemetry(time);
+
         return controller_interface::return_type::OK;
+    }
+
+    void Ocs2QuadrupedController::publishCommandTelemetry(const rclcpp::Time& time)
+    {
+        if (!command_telemetry_publisher_ || time.seconds() - last_command_telemetry_time_ < 0.02)
+        {
+            return;
+        }
+        if (ctrl_interfaces_.joint_position_command_interface_.size() != joint_names_.size())
+        {
+            return;
+        }
+        if (!command_telemetry_publisher_->trylock())
+        {
+            return;
+        }
+
+        auto& message = command_telemetry_publisher_->msg_;
+        message.header.stamp = time;
+        for (size_t i = 0; i < joint_names_.size(); ++i)
+        {
+            auto& values = message.interface_values[i].values;
+            values[0] = ctrl_interfaces_.joint_position_command_interface_[i].get().get_value();
+            values[1] = ctrl_interfaces_.joint_velocity_command_interface_[i].get().get_value();
+            values[2] = ctrl_interfaces_.joint_torque_command_interface_[i].get().get_value();
+            values[3] = ctrl_interfaces_.joint_kp_command_interface_[i].get().get_value();
+            values[4] = ctrl_interfaces_.joint_kd_command_interface_[i].get().get_value();
+        }
+        command_telemetry_publisher_->unlockAndPublish();
+        last_command_telemetry_time_ = time.seconds();
     }
 
     controller_interface::CallbackReturn Ocs2QuadrupedController::on_init()
@@ -152,6 +184,19 @@ namespace ocs2::legged_robot
                 ctrl_interfaces_.control_inputs_.rx = msg->rx;
                 ctrl_interfaces_.control_inputs_.ry = msg->ry;
             });
+
+        auto command_publisher = get_node()->create_publisher<control_msgs::msg::DynamicJointState>(
+            "~/joint_commands", 10);
+        command_telemetry_publisher_ = std::make_shared<
+            realtime_tools::RealtimePublisher<control_msgs::msg::DynamicJointState>>(command_publisher);
+        auto& command_message = command_telemetry_publisher_->msg_;
+        command_message.joint_names = joint_names_;
+        command_message.interface_values.resize(joint_names_.size());
+        for (auto& interface_values : command_message.interface_values)
+        {
+            interface_values.interface_names = {"position", "velocity", "effort", "kp", "kd"};
+            interface_values.values.resize(5, 0.0);
+        }
 
         return CallbackReturn::SUCCESS;
     }

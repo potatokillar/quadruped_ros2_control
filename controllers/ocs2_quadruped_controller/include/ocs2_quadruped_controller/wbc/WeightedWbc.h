@@ -7,6 +7,18 @@
 
 namespace ocs2::legged_robot
 {
+    struct WbcDiagnostics
+    {
+        int init_status{0};
+        int solution_status{0};
+        int n_wsr{0};
+        size_t mode{0};
+        size_t contacts{0};
+        bool has_finite_solution{false};
+        scalar_t max_constraint_violation{0.0};
+        scalar_t max_torque{0.0};
+    };
+
     class WeightedWbc final : public WbcBase
     {
     public:
@@ -18,6 +30,8 @@ namespace ocs2::legged_robot
 
         void loadTasksSetting(const std::string& taskFile, bool verbose) override;
 
+        const WbcDiagnostics& diagnostics() const { return diagnostics_; }
+
     protected:
         Task formulateConstraints();
 
@@ -26,5 +40,8 @@ namespace ocs2::legged_robot
 
     private:
         scalar_t weightSwingLeg_, weightBaseAccel_, weightContactForce_;
+        vector_t last_valid_solution_;
+        size_t qp_warning_count_{0};
+        WbcDiagnostics diagnostics_;
     };
 } // namespace legged
