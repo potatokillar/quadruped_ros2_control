@@ -6,6 +6,15 @@
   <xacro:arg name="CLASSIC" default="false"/>
   <xacro:arg name="LOW_POLY_VISUALS" default="true"/>
   <xacro:arg name="SIMPLIFIED_VISUALS" default="false"/>
+  <xacro:arg name="FIXED_BASE" default="false"/>
+
+  <xacro:if value="$(arg FIXED_BASE)">
+    <link name="world"/>
+    <joint name="world_to_base" type="fixed">
+      <parent link="world"/>
+      <child link="base"/>
+    </joint>
+  </xacro:if>
 
   <link name="base">
     <visual>
@@ -55,6 +64,9 @@
     <xacro:if value="$(arg CLASSIC)">
       <xacro:include filename="$(find sd05_description)/xacro/gazebo_classic.xacro"/>
     </xacro:if>
+    <xacro:unless value="$(arg CLASSIC)">
+      <xacro:include filename="$(find sd05_description)/xacro/gazebo.xacro"/>
+    </xacro:unless>
   </xacro:if>
   <xacro:unless value="$(arg GAZEBO)">
     <xacro:include filename="$(find sd05_description)/xacro/ros2_control.xacro"/>

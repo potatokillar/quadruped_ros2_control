@@ -60,26 +60,32 @@ struct jointData
     sdf::JointAxis joint_axis;
 
     /// \brief Current joint position
-    double joint_position;
+    double joint_position{0.0};
 
     /// \brief Current joint velocity
-    double joint_velocity;
+    double joint_velocity{0.0};
 
     /// \brief Current joint effort
-    double joint_effort;
+    double joint_effort{0.0};
 
     /// \brief Current cmd joint position
-    double joint_position_cmd;
+    double joint_position_cmd{0.0};
 
     /// \brief Current cmd joint velocity
-    double joint_velocity_cmd;
+    double joint_velocity_cmd{0.0};
 
     /// \brief Current cmd joint effort
-    double joint_effort_cmd;
+    double joint_effort_cmd{0.0};
 
-    double joint_kp_cmd;
+    double joint_kp_cmd{0.0};
 
-    double joint_kd_cmd;
+    double joint_kd_cmd{0.0};
+
+    /// \brief Low-level effort terms exported as diagnostic state interfaces.
+    double joint_feedforward_effort{0.0};
+    double joint_position_feedback_effort{0.0};
+    double joint_velocity_feedback_effort{0.0};
+    double joint_commanded_effort{0.0};
 
     /// \brief flag if joint is actuated (has command interfaces) or passive
     bool is_actuated;
@@ -340,6 +346,30 @@ namespace gz_quadruped_hardware
                         &this->dataPtr->joints_[j].joint_effort);
                     initial_effort = get_initial_value(joint_info.state_interfaces[i]);
                     this->dataPtr->joints_[j].joint_effort = initial_effort;
+                }
+                if (joint_info.state_interfaces[i].name == "feedforward_effort")
+                {
+                    this->dataPtr->state_interfaces_.emplace_back(
+                        joint_name, "feedforward_effort",
+                        &this->dataPtr->joints_[j].joint_feedforward_effort);
+                }
+                if (joint_info.state_interfaces[i].name == "position_feedback_effort")
+                {
+                    this->dataPtr->state_interfaces_.emplace_back(
+                        joint_name, "position_feedback_effort",
+                        &this->dataPtr->joints_[j].joint_position_feedback_effort);
+                }
+                if (joint_info.state_interfaces[i].name == "velocity_feedback_effort")
+                {
+                    this->dataPtr->state_interfaces_.emplace_back(
+                        joint_name, "velocity_feedback_effort",
+                        &this->dataPtr->joints_[j].joint_velocity_feedback_effort);
+                }
+                if (joint_info.state_interfaces[i].name == "commanded_effort")
+                {
+                    this->dataPtr->state_interfaces_.emplace_back(
+                        joint_name, "commanded_effort",
+                        &this->dataPtr->joints_[j].joint_commanded_effort);
                 }
             }
 
@@ -783,17 +813,17 @@ namespace gz_quadruped_hardware
                     this->dataPtr->ecm->Component<sim::components::JointForceCmd>(
                         this->dataPtr->joints_[i].sim_joint);
 
-                const double torque = this->dataPtr->joints_[i].joint_effort_cmd +
-                    this->dataPtr->joints_[i].joint_kp_cmd * (
-                        this->dataPtr->joints_[i].joint_position_cmd -
-                        this->dataPtr->joints_[i].joint_position)
-                    +
-                    this->dataPtr->joints_[i].joint_kd_cmd * (
-                        this->dataPtr->joints_[i].joint_velocity_cmd -
-                        this->dataPtr->joints_[i].joint_velocity);
+                auto& joint = this->dataPtr->joints_[i];
+                joint.joint_feedforward_effort = joint.joint_effort_cmd;
+                joint.joint_position_feedback_effort = joint.joint_kp_cmd * (
+                    joint.joint_position_cmd - joint.joint_position);
+                joint.joint_velocity_feedback_effort = joint.joint_kd_cmd * (
+                    joint.joint_velocity_cmd - joint.joint_velocity);
+                joint.joint_commanded_effort = joint.joint_feedforward_effort +
+                    joint.joint_position_feedback_effort + joint.joint_velocity_feedback_effort;
 
                 *jointEffortCmd = sim::components::JointForceCmd(
-                    {torque});
+                    {joint.joint_commanded_effort});
             }
         }
 

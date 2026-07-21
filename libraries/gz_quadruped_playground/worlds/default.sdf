@@ -75,6 +75,10 @@ gz service -s /world/empty/create \
         name="gz::sim::systems::Physics">
     </plugin>
     <plugin
+        filename="gz-sim-contact-system"
+        name="gz::sim::systems::Contact">
+    </plugin>
+    <plugin
         filename="gz-sim-user-commands-system"
         name="gz::sim::systems::UserCommands">
     </plugin>
@@ -108,6 +112,14 @@ gz service -s /world/empty/create \
             </plane>
           </geometry>
         </collision>
+        <sensor name="ground_contact_sensor" type="contact">
+          <contact>
+            <collision>collision</collision>
+            <topic>/ground_contacts</topic>
+          </contact>
+          <always_on>true</always_on>
+          <update_rate>1000</update_rate>
+        </sensor>
         <visual name="visual">
           <geometry>
             <plane>

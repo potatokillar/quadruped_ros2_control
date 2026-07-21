@@ -6,7 +6,8 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, RegisterEventHandler
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -18,6 +19,8 @@ def launch_setup(context, *args, **kwargs):
     world = context.launch_configurations['world']
     default_sdf_path = os.path.join(get_package_share_directory('gz_quadruped_playground'), 'worlds', world + '.sdf')
     print(default_sdf_path)
+    paused = context.launch_configurations['paused'].lower() == 'true'
+    gz_args = [' -v 4 ', default_sdf_path] if paused else [' -r -v 4 ', default_sdf_path]
 
     # Init Height When spawn the model
     init_height = context.launch_configurations['height']
@@ -35,7 +38,8 @@ def launch_setup(context, *args, **kwargs):
     xacro_file = os.path.join(pkg_path, 'xacro', 'robot.xacro')
     robot_description = xacro.process_file(xacro_file, mappings={
         'GAZEBO': 'true',
-        'EXTERNAL_SENSORS': 'true'
+        'EXTERNAL_SENSORS': context.launch_configurations['external_sensors'],
+        'FIXED_BASE': context.launch_configurations['fixed_base'],
     }).toxml()
     robot_state_publisher = Node(
         package='robot_state_publisher',
@@ -60,6 +64,13 @@ def launch_setup(context, *args, **kwargs):
                                                                  'ocs2.launch.py'])])
         )
         rviz_config_file = os.path.join(get_package_share_directory('gz_quadruped_playground'), "config", "ocs2.rviz")
+    elif controller == 'joint_diagnostic':
+        controller_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([PathJoinSubstitution([FindPackageShare('gz_quadruped_playground'),
+                                                                 'launch',
+                                                                 'joint_diagnostic.launch.py'])])
+        )
+        rviz_config_file = os.path.join(get_package_share_directory('gz_quadruped_playground'), "config", "rviz.rviz")
     else:
         controller_launch = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([PathJoinSubstitution([FindPackageShare('gz_quadruped_playground'),
@@ -73,7 +84,8 @@ def launch_setup(context, *args, **kwargs):
         executable='rviz2',
         name='rviz',
         output='screen',
-        arguments=["-d", rviz_config_file]
+        arguments=["-d", rviz_config_file],
+        condition=IfCondition(LaunchConfiguration('rviz'))
     )
 
     return [
@@ -85,7 +97,7 @@ def launch_setup(context, *args, **kwargs):
                 [PathJoinSubstitution([FindPackageShare('ros_gz_sim'),
                                        'launch',
                                        'gz_sim.launch.py'])]),
-            launch_arguments=[('gz_args', [' -r -v 4 ', default_sdf_path])]),
+            launch_arguments=[('gz_args', gz_args)]),
         controller_launch
     ]
 
@@ -113,6 +125,30 @@ def generate_launch_description():
         'controller',
         default_value='unitree_guide',
         description='The ROS2-Control Controllers'
+    )
+
+    rviz = DeclareLaunchArgument(
+        'rviz',
+        default_value='true',
+        description='Start RViz2'
+    )
+
+    external_sensors = DeclareLaunchArgument(
+        'external_sensors',
+        default_value='false',
+        description='Enable optional camera and lidar sensors'
+    )
+
+    paused = DeclareLaunchArgument(
+        'paused',
+        default_value='false',
+        description='Start Gazebo with physics paused'
+    )
+
+    fixed_base = DeclareLaunchArgument(
+        'fixed_base',
+        default_value='false',
+        description='Attach the robot base to the Gazebo world for isolated joint tests'
     )
 
     gz_bridge_node = Node(
@@ -147,6 +183,7 @@ def generate_launch_description():
             {'use_sim_time': True,
              'camera.image.compressed.jpeg_quality': 75},
         ],
+        condition=IfCondition(LaunchConfiguration('external_sensors')),
     )
 
     return LaunchDescription([
@@ -154,6 +191,10 @@ def generate_launch_description():
         pkg_description,
         height,
         controller,
+        rviz,
+        external_sensors,
+        paused,
+        fixed_base,
         gz_bridge_node,
         gz_image_bridge_node,
         OpaqueFunction(function=launch_setup),

@@ -22,10 +22,34 @@ controller_manager:
     rl_quadruped_controller:
       type: rl_quadruped_controller/LeggedGymController
 
+    rl_hip_diagnostic_controller:
+      type: forward_command_controller/MultiInterfaceForwardCommandController
+
+    rl_thigh_diagnostic_controller:
+      type: forward_command_controller/MultiInterfaceForwardCommandController
+
+    rl_calf_diagnostic_controller:
+      type: forward_command_controller/MultiInterfaceForwardCommandController
+
 imu_sensor_broadcaster:
   ros__parameters:
     sensor_name: "imu_sensor"
     frame_id: "imu_link"
+
+rl_hip_diagnostic_controller:
+  ros__parameters:
+    joint: RL_hip_joint
+    interface_names: [position, velocity, effort, kp, kd]
+
+rl_thigh_diagnostic_controller:
+  ros__parameters:
+    joint: RL_thigh_joint
+    interface_names: [position, velocity, effort, kp, kd]
+
+rl_calf_diagnostic_controller:
+  ros__parameters:
+    joint: RL_calf_joint
+    interface_names: [position, velocity, effort, kp, kd]
 
 leg_pd_controller:
   ros__parameters:
@@ -55,7 +79,7 @@ ocs2_quadruped_controller:
   ros__parameters:
     update_rate: 200  # Hz
     robot_pkg: "sd05_description"
-    default_kd: 5.5
+    default_kd: 2.0
     feet_force_threshold: 4.0
     stand_kp: 80.0
     stand_kd: 3.5
