@@ -12,7 +12,7 @@
 #include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
 #include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
-#include <realtime_tools/realtime_tools/realtime_buffer.hpp>
+#include <realtime_tools/realtime_buffer.hpp>
 
 namespace ocs2::legged_robot
 {
