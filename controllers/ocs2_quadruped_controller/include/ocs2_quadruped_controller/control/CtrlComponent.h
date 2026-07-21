@@ -12,7 +12,6 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <ocs2_core/misc/Benchmark.h>
 #include <ocs2_mpc/MPC_MRT_Interface.h>
-#include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #ifdef OCS2_PERCEPTIVE_SUPPORT
 #include <ocs2_quadruped_controller/perceptive/visualize/FootPlacementVisualization.h>
 #include <ocs2_quadruped_controller/perceptive/visualize/SphereVisualization.h>
@@ -44,7 +43,6 @@ namespace ocs2::legged_robot
         std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
         std::unique_ptr<LeggedInterface> legged_interface_;
         std::unique_ptr<PinocchioEndEffectorKinematics> ee_kinematics_;
-        std::unique_ptr<LeggedRobotVisualizer> visualizer_;
         std::shared_ptr<MPC_BASE> mpc_;
         std::unique_ptr<MPC_MRT_Interface> mpc_mrt_interface_;
 

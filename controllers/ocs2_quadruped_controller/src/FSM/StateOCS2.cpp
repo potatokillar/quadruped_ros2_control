@@ -148,10 +148,6 @@ namespace ocs2::legged_robot
 
             last_telemetry_time_ = ctrl_component_->observation_.time;
         }
-
-        // Visualization
-        ctrl_component_->visualizer_->update(ctrl_component_->mpc_mrt_interface_->getPolicy(),
-                                             ctrl_component_->mpc_mrt_interface_->getCommand());
     }
 
     void StateOCS2::exit()

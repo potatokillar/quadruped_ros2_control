@@ -14,7 +14,6 @@
 
 #include <ocs2_centroidal_model/CentroidalModelRbdConversions.h>
 #include <ocs2_core/thread_support/ExecuteAndSleep.h>
-#include <ocs2_legged_robot_ros/visualization/LeggedRobotVisualizer.h>
 #include <ocs2_quadruped_controller/control/GaitManager.h>
 #ifdef OCS2_PERCEPTIVE_SUPPORT
 #include <ocs2_quadruped_controller/perceptive/interface/PerceptiveLeggedInterface.h>
@@ -65,13 +64,6 @@ namespace ocs2::legged_robot
         rbd_conversions_ = std::make_unique<CentroidalModelRbdConversions>(legged_interface_->getPinocchioInterface(),
                                                                            legged_interface_->getCentroidalModelInfo());
 
-        // Init visualizer
-        visualizer_ = std::make_unique<LeggedRobotVisualizer>(
-            legged_interface_->getPinocchioInterface(),
-            legged_interface_->getCentroidalModelInfo(),
-            *ee_kinematics_,
-            node_);
-
         // Init observation
         observation_.state.setZero(static_cast<long>(legged_interface_->getCentroidalModelInfo().stateDim));
         observation_.input.setZero(
@@ -118,7 +110,6 @@ namespace ocs2::legged_robot
             yaw_last, observation_.state(9));
         observation_.mode = estimator_->getMode();
 
-        visualizer_->update(observation_);
 #ifdef OCS2_PERCEPTIVE_SUPPORT
         if (enable_perceptive_)
         {
