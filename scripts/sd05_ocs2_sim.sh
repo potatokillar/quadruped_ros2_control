@@ -38,27 +38,81 @@ wait_for_ocs2_controller() {
   local launch_pid="$1"
   step_simulation_while_paused "${launch_pid}" &
   local step_pid=$!
+  local wait_status
 
-  for _ in {1..600}; do
-    if ! kill -0 "${launch_pid}" 2>/dev/null; then
-      kill "${step_pid}" 2>/dev/null || true
-      wait "${step_pid}" 2>/dev/null || true
-      echo "Gazebo launch exited before the OCS2 controller became active." >&2
-      return 1
-    fi
-    if timeout 2 ros2 control list_controllers 2>/dev/null |
-        grep -Eq 'ocs2_quadruped_controller.*active'; then
-      kill "${step_pid}" 2>/dev/null || true
-      wait "${step_pid}" 2>/dev/null || true
-      return
-    fi
-    sleep 0.1
-  done
-
+  if wait_for_ocs2_controller_service "${launch_pid}"; then
+    wait_status=0
+  else
+    wait_status=$?
+  fi
   kill "${step_pid}" 2>/dev/null || true
   wait "${step_pid}" 2>/dev/null || true
-  echo "Timed out waiting for the OCS2 controller to become active." >&2
+
+  case "${wait_status}" in
+    0)
+      return
+      ;;
+    2)
+      echo "Gazebo launch exited before the OCS2 controller became active." >&2
+      ;;
+    *)
+      echo "Timed out waiting for the OCS2 controller to become active." >&2
+      ;;
+  esac
   return 1
+}
+
+wait_for_ocs2_controller_service() {
+  local launch_pid="$1"
+
+  python3 - "${launch_pid}" <<'PY'
+import os
+import sys
+import time
+
+import rclpy
+from controller_manager_msgs.srv import ListControllers
+from rclpy.node import Node
+
+
+launch_pid = int(sys.argv[1])
+deadline = time.monotonic() + 120.0
+rclpy.init()
+node = Node("sd05_ocs2_controller_waiter")
+client = node.create_client(ListControllers, "/controller_manager/list_controllers")
+
+try:
+    while rclpy.ok() and time.monotonic() < deadline:
+        try:
+            os.kill(launch_pid, 0)
+        except ProcessLookupError:
+            raise SystemExit(2)
+
+        if not client.wait_for_service(timeout_sec=0.2):
+            continue
+
+        future = client.call_async(ListControllers.Request())
+        rclpy.spin_until_future_complete(node, future, timeout_sec=1.0)
+        if not future.done():
+            continue
+
+        try:
+            controllers = future.result().controller
+        except Exception:
+            time.sleep(0.1)
+            continue
+
+        if any(controller.name == "ocs2_quadruped_controller" and
+               controller.state == "active" for controller in controllers):
+            raise SystemExit(0)
+
+        time.sleep(0.1)
+
+    raise SystemExit(3)
+finally:
+    node.destroy_node()
+    rclpy.shutdown()
+PY
 }
 
 step_simulation_while_paused() {
@@ -70,7 +124,7 @@ step_simulation_while_paused() {
     ign service -s /world/empty/control \
       --reqtype ignition.msgs.WorldControl \
       --reptype ignition.msgs.Boolean \
-      --timeout 100 \
+      --timeout 500 \
       --req 'pause: true, multi_step: 1' >/dev/null 2>&1 || true
     sleep 0.02
   done
