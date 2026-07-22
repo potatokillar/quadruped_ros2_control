@@ -208,9 +208,9 @@ selfCollision
 ; Whole body control
 torqueLimitsTask
 {
-   (0,0)  34.92    ; HAA
-   (1,0)  34.92    ; HFE
-   (2,0)  34.92    ; KFE
+   (0,0)  17.0     ; HAA / HT8108-J6 peak torque
+   (1,0)  17.0     ; HFE / HT8108-J6 peak torque
+   (2,0)  22.0     ; KFE / HT8108-J9 stall torque, external linkage 1:1
 }
 
 frictionConeTask

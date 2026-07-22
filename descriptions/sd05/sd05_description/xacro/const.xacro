@@ -489,21 +489,21 @@
     <parent link="trunk" />
     <child link="FL_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.87" upper="0.87" effort="34.92" velocity="15" />
+    <limit lower="-0.87" upper="0.87" effort="17" velocity="15" />
   </joint>
   <joint name="FL_thigh_joint" type="revolute">
     <origin xyz="0.057 0.015 0" rpy="0 0 0" />
     <parent link="FL_hip" />
     <child link="FL_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="-1.5" upper="4.2" effort="34.92" velocity="15" />
+    <limit lower="-1.5" upper="4.2" effort="17" velocity="15" />
   </joint>
   <joint name="FL_calf_joint" type="revolute">
     <origin xyz="0.018707 0.0842 -0.19912" rpy="0 0 0" />
     <parent link="FL_thigh" />
     <child link="FL_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="-2.875" upper="-1.3" effort="34.92" velocity="15" />
+    <limit lower="-2.875" upper="-1.3" effort="22" velocity="15" />
   </joint>
   <joint name="FL_foot_joint" type="fixed">
     <origin xyz="-0.0118624601963032 -0.00934766988539898 -0.203178295218204" rpy="0 0 0" />
@@ -534,21 +534,21 @@
     <parent link="trunk" />
     <child link="FR_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.87" upper="0.87" effort="34.92" velocity="15" />
+    <limit lower="-0.87" upper="0.87" effort="17" velocity="15" />
   </joint>
   <joint name="FR_thigh_joint" type="revolute">
     <origin xyz="0.057 -0.015 0" rpy="0 0 0" />
     <parent link="FR_hip" />
     <child link="FR_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="-1.5" upper="4.2" effort="34.92" velocity="15" />
+    <limit lower="-1.5" upper="4.2" effort="17" velocity="15" />
   </joint>
   <joint name="FR_calf_joint" type="revolute">
     <origin xyz="0.018707 -0.0842 -0.19912" rpy="0 0 0" />
     <parent link="FR_thigh" />
     <child link="FR_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="-2.875" upper="-1.3" effort="34.92" velocity="15" />
+    <limit lower="-2.875" upper="-1.3" effort="22" velocity="15" />
   </joint>
   <joint name="FR_foot_joint" type="fixed">
     <origin xyz="-0.0118624599862587 0.00935232994192395 -0.203178295455475" rpy="0 0 0" />
@@ -579,21 +579,21 @@
     <parent link="trunk" />
     <child link="RL_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.87" upper="0.87" effort="34.92" velocity="15" />
+    <limit lower="-0.87" upper="0.87" effort="17" velocity="15" />
   </joint>
   <joint name="RL_thigh_joint" type="revolute">
     <origin xyz="-0.057 0.015 0" rpy="0 0 0" />
     <parent link="RL_hip" />
     <child link="RL_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="-1.5" upper="4.2" effort="34.92" velocity="15" />
+    <limit lower="-1.5" upper="4.2" effort="17" velocity="15" />
   </joint>
   <joint name="RL_calf_joint" type="revolute">
     <origin xyz="0.0058724 0.0842 -0.19991" rpy="0 0 0" />
     <parent link="RL_thigh" />
     <child link="RL_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="-2.875" upper="-1.3" effort="34.92" velocity="15" />
+    <limit lower="-2.875" upper="-1.3" effort="22" velocity="15" />
   </joint>
   <joint name="RL_foot_joint" type="fixed">
     <origin xyz="-0.0163722715806024 -0.00934766721175742 -0.20286469865015" rpy="0 0 0" />
@@ -624,21 +624,21 @@
     <parent link="trunk" />
     <child link="RR_hip" />
     <axis xyz="1 0 0" />
-    <limit lower="-0.87" upper="0.87" effort="34.92" velocity="15" />
+    <limit lower="-0.87" upper="0.87" effort="17" velocity="15" />
   </joint>
   <joint name="RR_thigh_joint" type="revolute">
     <origin xyz="-0.057 -0.015 0" rpy="0 0 0" />
     <parent link="RR_hip" />
     <child link="RR_thigh" />
     <axis xyz="0 1 0" />
-    <limit lower="-1.5" upper="4.2" effort="34.92" velocity="15" />
+    <limit lower="-1.5" upper="4.2" effort="17" velocity="15" />
   </joint>
   <joint name="RR_calf_joint" type="revolute">
     <origin xyz="0.0058724 -0.0842 -0.19991" rpy="0 0 0" />
     <parent link="RR_thigh" />
     <child link="RR_calf" />
     <axis xyz="0 1 0" />
-    <limit lower="-2.875" upper="-1.3" effort="34.92" velocity="15" />
+    <limit lower="-2.875" upper="-1.3" effort="22" velocity="15" />
   </joint>
   <joint name="RR_foot_joint" type="fixed">
     <origin xyz="-0.0163722715023994 0.00935233270175662 -0.202864698693381" rpy="0 0 0" />
