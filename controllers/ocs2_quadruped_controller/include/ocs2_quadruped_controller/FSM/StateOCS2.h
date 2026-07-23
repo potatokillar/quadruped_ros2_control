@@ -54,6 +54,8 @@ namespace ocs2::legged_robot
         rclcpp::Publisher<ocs2_msgs::msg::MpcObservation>::SharedPtr desired_observation_publisher_;
         rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr wbc_diagnostics_publisher_;
         scalar_t last_telemetry_time_{-1.0};
+        scalar_t vcom_x_weight_{0.0};
+        scalar_t vcom_y_weight_{0.0};
 
         double default_kp_ = 0;
         double default_kd_ = 6;
