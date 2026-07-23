@@ -9,16 +9,25 @@ namespace ocs2::legged_robot {
                                  const rclcpp_lifecycle::LifecycleNode::SharedPtr &node) : StateEstimateBase(
         std::move(info), ctrl_component,
         node) {
+        if (!node_->has_parameter("odom_topic")) {
+            node_->declare_parameter("odom_topic", odom_topic_);
+        }
+        odom_topic_ = node_->get_parameter("odom_topic").as_string();
+        republish_odometry_ = odom_topic_ != "/odom" && odom_topic_ != "odom";
+        if (republish_odometry_) {
+            initPublishers();
+        }
         odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-            "/odom", 10, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+            odom_topic_, 10, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
                 buffer_.writeFromNonRT(*msg);
             });
     }
 
     vector_t FromOdomTopic::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
-        const nav_msgs::msg::Odometry odom = *buffer_.readFromRT();
+        nav_msgs::msg::Odometry odom = *buffer_.readFromRT();
 
         updateJointStates();
+        updateContact();
         updateAngular(quatToZyx(Eigen::Quaternion(
                           odom.pose.pose.orientation.w,
                           odom.pose.pose.orientation.x,
@@ -36,6 +45,10 @@ namespace ocs2::legged_robot {
                          odom.twist.twist.linear.x,
                          odom.twist.twist.linear.y,
                          odom.twist.twist.linear.z));
+        if (republish_odometry_) {
+            odom.header.stamp = time;
+            publishMsgs(odom);
+        }
         return rbd_state_;
     }
 }

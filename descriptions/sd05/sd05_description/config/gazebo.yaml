@@ -130,6 +130,8 @@ ocs2_quadruped_controller:
 
     imu_name: "imu_sensor"
     base_name: "base"
+    estimator_type: "odom"
+    odom_topic: "/ground_truth/odom"
 
     imu_interfaces:
       - orientation.w

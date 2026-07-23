@@ -6,6 +6,8 @@
 #include "StateEstimateBase.h"
 #include <realtime_tools/realtime_buffer.hpp>
 
+#include <string>
+
 namespace ocs2::legged_robot
 {
     class FromOdomTopic final : public StateEstimateBase
@@ -19,5 +21,7 @@ namespace ocs2::legged_robot
     protected:
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
         realtime_tools::RealtimeBuffer<nav_msgs::msg::Odometry> buffer_;
+        std::string odom_topic_{"/odom"};
+        bool republish_odometry_{false};
     };
 };
