@@ -58,7 +58,7 @@ mpc
 {
   timeHorizon                     1.0  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
-  coldStart                       false
+  coldStart                       true
 
   debugPrint                      false
 
