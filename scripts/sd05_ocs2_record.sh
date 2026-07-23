@@ -3,7 +3,8 @@ set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_DIR="${ROOT_DIR}/install_native"
-OUTPUT_ROOT="${HOME}/.ros/sd05_diagnostics"
+DATA_ROOT="${SD05_DATA_ROOT:-/media/wl/data/quadruped_ros2_control}"
+OUTPUT_ROOT="${DATA_ROOT}/rosbags"
 DURATION=""
 
 usage() {

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import csv
+import os
 import time
+from pathlib import Path
 
 import rclpy
 from control_msgs.msg import DynamicJointState
@@ -133,7 +135,10 @@ def main():
     node = StabilityTest()
     try:
         node.run_tests()
-        output = "/tmp/sd05_rl_calf_stability.csv"
+        data_root = Path(os.environ.get(
+            "SD05_DATA_ROOT", "/media/wl/data/quadruped_ros2_control"))
+        output = data_root / "experiments" / "sd05_rl_calf_stability.csv"
+        output.parent.mkdir(parents=True, exist_ok=True)
         with open(output, "w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=node.samples[0].keys())
             writer.writeheader()

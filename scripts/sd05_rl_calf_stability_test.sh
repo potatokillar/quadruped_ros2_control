@@ -3,7 +3,10 @@ set -eo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_DIR="${ROOT_DIR}/install_native"
-LAUNCH_LOG="/tmp/sd05_rl_calf_stability_launch.log"
+DATA_ROOT="${SD05_DATA_ROOT:-/media/wl/data/quadruped_ros2_control}"
+LAUNCH_LOG="${DATA_ROOT}/logs/sd05_rl_calf_stability_launch.log"
+
+mkdir -p "$(dirname "${LAUNCH_LOG}")"
 
 source /opt/ros/humble/setup.bash
 source "${INSTALL_DIR}/setup.bash"
