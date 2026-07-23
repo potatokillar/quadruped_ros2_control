@@ -28,7 +28,7 @@ sqp
 {
   nThreads                              3
   dt                                    0.015
-  sqpIteration                          3
+  sqpIteration                          1
   deltaTol                              1e-4
   g_max                                 1e-2
   g_min                                 1e-6
@@ -105,8 +105,8 @@ Q
   scaling 1e+0
 
   ;; Normalized Centroidal Momentum: [linear, angular] ;;
-  (0,0)   15.0     ; vcom_x
-  (1,1)   15.0     ; vcom_y
+  (0,0)   150.0    ; vcom_x
+  (1,1)   150.0    ; vcom_y
   (2,2)   100.0    ; vcom_z
   (3,3)   10.0     ; L_x / robotMass
   (4,4)   30.0     ; L_y / robotMass
