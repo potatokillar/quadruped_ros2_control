@@ -102,6 +102,7 @@ topics=(
   /clock
   /world/empty/pose/info
   /world/empty/dynamic_pose/info
+  /ground_contacts
   /joint_states
   /dynamic_joint_states
   /imu_sensor_broadcaster/imu

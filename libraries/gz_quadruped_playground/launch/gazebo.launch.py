@@ -157,6 +157,7 @@ def generate_launch_description():
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/ground_truth/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+            "/ground_contacts@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
             "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
             "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
             "/scan/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
