@@ -228,7 +228,7 @@ weight
 {
     swingLeg        100
     baseAccel       1
-    contactForce    0.05
+    contactForce    1.0
 }
 
 
