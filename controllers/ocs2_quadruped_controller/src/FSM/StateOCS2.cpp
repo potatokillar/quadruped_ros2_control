@@ -10,6 +10,7 @@
 #include <ocs2_quadruped_controller/wbc/WeightedWbc.h>
 #include <ocs2_sqp/SqpMpc.h>
 
+#include <array>
 #include <string>
 
 namespace ocs2::legged_robot
@@ -144,6 +145,39 @@ namespace ocs2::legged_robot
             append_value("has_finite_solution", wbc_diagnostics.has_finite_solution ? 1 : 0);
             append_value("max_constraint_violation", wbc_diagnostics.max_constraint_violation);
             append_value("max_torque", wbc_diagnostics.max_torque);
+
+            const auto& info = ctrl_component_->legged_interface_->getCentroidalModelInfo();
+            const auto& contact_names = ctrl_component_->legged_interface_->modelSettings().contactNames3DoF;
+            const Eigen::Index contact_force_offset = info.generalizedCoordinatesNum;
+            const Eigen::Index contact_force_size = 3 * info.numThreeDofContacts;
+            if (x.size() >= contact_force_offset + contact_force_size &&
+                optimized_input_.size() >= contact_force_size &&
+                contact_names.size() == info.numThreeDofContacts)
+            {
+                static constexpr std::array<const char*, 3> axes{"x", "y", "z"};
+                for (size_t contact = 0; contact < info.numThreeDofContacts; ++contact)
+                {
+                    for (size_t axis = 0; axis < axes.size(); ++axis)
+                    {
+                        const Eigen::Index index = static_cast<Eigen::Index>(3 * contact + axis);
+                        append_value("wbc_contact_force_" + contact_names[contact] + "_" + axes[axis],
+                                     x(contact_force_offset + index));
+                        append_value("mpc_contact_force_" + contact_names[contact] + "_" + axes[axis],
+                                     optimized_input_(index));
+                    }
+                }
+            }
+
+            if (x.size() >= 6)
+            {
+                static constexpr std::array<const char*, 6> acceleration_names{
+                    "linear_x", "linear_y", "linear_z", "zyx_z", "zyx_y", "zyx_x"
+                };
+                for (size_t index = 0; index < acceleration_names.size(); ++index)
+                {
+                    append_value("wbc_base_acceleration_" + std::string(acceleration_names[index]), x(index));
+                }
+            }
             wbc_diagnostics_publisher_->publish(std::move(diagnostics_message));
 
             last_telemetry_time_ = ctrl_component_->observation_.time;
