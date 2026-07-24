@@ -20,6 +20,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(controller_manager REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -74,6 +75,7 @@ add_library(gz_quadruped_plugins SHARED
         src/gz_system.cpp
 )
 ament_target_dependencies(gz_quadruped_plugins
+        geometry_msgs
         rclcpp_lifecycle
         hardware_interface
         rclcpp

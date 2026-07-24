@@ -104,6 +104,14 @@ topics=(
   /world/empty/pose/info
   /world/empty/dynamic_pose/info
   /ground_contacts
+  /diagnostics/foot_joint_wrenches/FL_foot_force
+  /diagnostics/foot_joint_wrenches/FR_foot_force
+  /diagnostics/foot_joint_wrenches/RL_foot_force
+  /diagnostics/foot_joint_wrenches/RR_foot_force
+  /diagnostics/foot_contact_wrenches/FL
+  /diagnostics/foot_contact_wrenches/FR
+  /diagnostics/foot_contact_wrenches/RL
+  /diagnostics/foot_contact_wrenches/RR
   /joint_states
   /dynamic_joint_states
   /imu_sensor_broadcaster/imu

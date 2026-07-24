@@ -99,8 +99,14 @@
   <link name="FL_foot">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="0.037" />
-      <inertia ixx="0.00000757" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000769" />
+      <xacro:if value="$(arg GAZEBO)">
+        <mass value="0.036" />
+        <inertia ixx="0.00000732" ixy="0" ixz="-0.00000113" iyy="0.00000735" iyz="0" izz="0.00000744" />
+      </xacro:if>
+      <xacro:unless value="$(arg GAZEBO)">
+        <mass value="0.037" />
+        <inertia ixx="0.00000757" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000769" />
+      </xacro:unless>
     </inertial>
     <xacro:sd05_visual mesh="package://sd05_description/meshes/FL_foot_Link.STL"
       color="0.690196078431373 0.690196078431373 0.690196078431373 1"
@@ -108,12 +114,14 @@
       simple_xyz="0 0 0" simple_rpy="0 0 0">
       <sphere radius="0.025" />
     </xacro:sd05_visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <sphere radius="0.025" />
-      </geometry>
-    </collision>
+    <xacro:unless value="$(arg GAZEBO)">
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.025" />
+        </geometry>
+      </collision>
+    </xacro:unless>
   </link>
   <link name="FL_calf_rotor">
     <inertial>
@@ -208,8 +216,14 @@
   <link name="FR_foot">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="0.037" />
-      <inertia ixx="0.00000757" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000769" />
+      <xacro:if value="$(arg GAZEBO)">
+        <mass value="0.036" />
+        <inertia ixx="0.00000732" ixy="0" ixz="-0.00000113" iyy="0.00000735" iyz="0" izz="0.00000744" />
+      </xacro:if>
+      <xacro:unless value="$(arg GAZEBO)">
+        <mass value="0.037" />
+        <inertia ixx="0.00000757" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000769" />
+      </xacro:unless>
     </inertial>
     <xacro:sd05_visual mesh="package://sd05_description/meshes/FR_foot_Link.STL"
       color="0.690196078431373 0.690196078431373 0.690196078431373 1"
@@ -217,12 +231,14 @@
       simple_xyz="0 0 0" simple_rpy="0 0 0">
       <sphere radius="0.025" />
     </xacro:sd05_visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <sphere radius="0.025" />
-      </geometry>
-    </collision>
+    <xacro:unless value="$(arg GAZEBO)">
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.025" />
+        </geometry>
+      </collision>
+    </xacro:unless>
   </link>
   <link name="FR_calf_rotor">
     <inertial>
@@ -317,8 +333,14 @@
   <link name="RL_foot">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="0.037" />
-      <inertia ixx="0.00000762" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000764" />
+      <xacro:if value="$(arg GAZEBO)">
+        <mass value="0.036" />
+        <inertia ixx="0.00000737" ixy="0" ixz="-0.00000113" iyy="0.00000735" iyz="0" izz="0.00000739" />
+      </xacro:if>
+      <xacro:unless value="$(arg GAZEBO)">
+        <mass value="0.037" />
+        <inertia ixx="0.00000762" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000764" />
+      </xacro:unless>
     </inertial>
     <xacro:sd05_visual mesh="package://sd05_description/meshes/RL_foot_Link.STL"
       color="0.690196078431373 0.690196078431373 0.690196078431373 1"
@@ -326,12 +348,14 @@
       simple_xyz="0 0 0" simple_rpy="0 0 0">
       <sphere radius="0.025" />
     </xacro:sd05_visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <sphere radius="0.025" />
-      </geometry>
-    </collision>
+    <xacro:unless value="$(arg GAZEBO)">
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.025" />
+        </geometry>
+      </collision>
+    </xacro:unless>
   </link>
   <link name="RL_calf_rotor">
     <inertial>
@@ -426,8 +450,14 @@
   <link name="RR_foot">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="0.037" />
-      <inertia ixx="0.00000762" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000764" />
+      <xacro:if value="$(arg GAZEBO)">
+        <mass value="0.036" />
+        <inertia ixx="0.00000737" ixy="0" ixz="-0.00000113" iyy="0.00000735" iyz="0" izz="0.00000739" />
+      </xacro:if>
+      <xacro:unless value="$(arg GAZEBO)">
+        <mass value="0.037" />
+        <inertia ixx="0.00000762" ixy="0" ixz="-0.00000113" iyy="0.0000076" iyz="0" izz="0.00000764" />
+      </xacro:unless>
     </inertial>
     <xacro:sd05_visual mesh="package://sd05_description/meshes/RR_foot_Link.STL"
       color="0.690196078431373 0.690196078431373 0.690196078431373 1"
@@ -435,12 +465,14 @@
       simple_xyz="0 0 0" simple_rpy="0 0 0">
       <sphere radius="0.025" />
     </xacro:sd05_visual>
-    <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-      <geometry>
-        <sphere radius="0.025" />
-      </geometry>
-    </collision>
+    <xacro:unless value="$(arg GAZEBO)">
+      <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        <geometry>
+          <sphere radius="0.025" />
+        </geometry>
+      </collision>
+    </xacro:unless>
   </link>
   <link name="RR_calf_rotor">
     <inertial>

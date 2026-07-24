@@ -47,6 +47,7 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/lexical_casts.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
+#include <geometry_msgs/msg/wrench_stamped.hpp>
 
 struct jointData
 {
@@ -150,6 +151,15 @@ public:
 
     /// \brief  Current foot end effort
     double foot_effort{0.0};
+
+    /// \brief Child frame in which the transmitted wrench is expressed.
+    std::string frame_id{};
+
+    /// \brief Diagnostic-only publisher. No controller consumes this topic.
+    rclcpp::Publisher<geometry_msgs::msg::WrenchStamped>::SharedPtr diagnostic_publisher;
+
+    /// \brief True for contact-pad sensors that must not become ros2_control interfaces.
+    bool diagnostic_only{false};
 
     /// \brief callback to get the Force Torque topic values
     void OnForceTorque(const GZ_MSGS_NAMESPACE Wrench& _msg);
@@ -552,6 +562,40 @@ namespace gz_quadruped_hardware
                     RCLCPP_INFO_STREAM(this->nh_->get_logger(), "Topic name: " << sensorTopicComp->Data());
                 }
                 ftData->name = _name->Data();
+                const std::string contactPadSuffix = "_contact_pad_wrench";
+                ftData->diagnostic_only =
+                    ftData->name.size() > contactPadSuffix.size() &&
+                    ftData->name.compare(
+                        ftData->name.size() - contactPadSuffix.size(),
+                        contactPadSuffix.size(),
+                        contactPadSuffix) == 0;
+
+                std::string diagnosticTopic;
+                if (ftData->diagnostic_only)
+                {
+                    const std::string leg = ftData->name.substr(
+                        0, ftData->name.size() - contactPadSuffix.size());
+                    ftData->frame_id = leg + "_contact_pad";
+                    diagnosticTopic = "/diagnostics/foot_contact_wrenches/" + leg;
+                }
+                else
+                {
+                    ftData->frame_id = ftData->name;
+                    constexpr char forceSuffix[] = "_force";
+                    if (ftData->frame_id.size() >= sizeof(forceSuffix) - 1 &&
+                        ftData->frame_id.compare(
+                            ftData->frame_id.size() - (sizeof(forceSuffix) - 1),
+                            sizeof(forceSuffix) - 1,
+                            forceSuffix) == 0)
+                    {
+                        ftData->frame_id.erase(ftData->frame_id.size() - (sizeof(forceSuffix) - 1));
+                    }
+                    diagnosticTopic = "/diagnostics/foot_joint_wrenches/" + ftData->name;
+                }
+                ftData->diagnostic_publisher = this->nh_->create_publisher<
+                    geometry_msgs::msg::WrenchStamped>(
+                    diagnosticTopic,
+                    rclcpp::SensorDataQoS());
                 ftData->sim_ft_sensors_ = _entity;
                 ftData->sim_joint_ = _parent->Data();
                 if (!this->dataPtr->ecm->EntityHasComponentType(
@@ -582,10 +626,13 @@ namespace gz_quadruped_hardware
                         ftData->topicName.clear();
                     }
                 }
-                this->dataPtr->state_interfaces_.emplace_back(
-                    "foot_force",
-                    ftData->name,
-                    &ftData->foot_effort);
+                if (!ftData->diagnostic_only)
+                {
+                    this->dataPtr->state_interfaces_.emplace_back(
+                        "foot_force",
+                        ftData->name,
+                        &ftData->foot_effort);
+                }
                 this->dataPtr->ft_sensors_.push_back(ftData);
                 return true;
             });
@@ -630,7 +677,7 @@ namespace gz_quadruped_hardware
     }
 
     hardware_interface::return_type GazeboSimSystem::read(
-        const rclcpp::Time& /*time*/,
+        const rclcpp::Time& time,
         const rclcpp::Duration& /*period*/)
     {
         for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i)
@@ -713,6 +760,18 @@ namespace gz_quadruped_hardware
                 const auto& force = jointWrench->Data().force();
                 this->dataPtr->ft_sensors_[i]->foot_effort = std::sqrt(
                     force.x() * force.x() + force.y() * force.y() + force.z() * force.z());
+
+                geometry_msgs::msg::WrenchStamped message;
+                message.header.stamp = time;
+                message.header.frame_id = this->dataPtr->ft_sensors_[i]->frame_id;
+                message.wrench.force.x = force.x();
+                message.wrench.force.y = force.y();
+                message.wrench.force.z = force.z();
+                const auto& torque = jointWrench->Data().torque();
+                message.wrench.torque.x = torque.x();
+                message.wrench.torque.y = torque.y();
+                message.wrench.torque.z = torque.z();
+                this->dataPtr->ft_sensors_[i]->diagnostic_publisher->publish(message);
             }
 
             if (this->dataPtr->ft_sensors_[i]->topicName.empty())
