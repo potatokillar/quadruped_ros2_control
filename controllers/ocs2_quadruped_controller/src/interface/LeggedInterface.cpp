@@ -13,6 +13,7 @@
 #include <ocs2_core/misc/LoadStdVectorOfPair.h>
 #include <ocs2_core/soft_constraint/StateInputSoftConstraint.h>
 #include <ocs2_core/soft_constraint/StateSoftConstraint.h>
+#include <ocs2_core/constraint/LinearStateConstraint.h>
 #include <ocs2_legged_robot/dynamics/LeggedRobotDynamicsAD.h>
 #include <ocs2_oc/synchronized_module/SolverSynchronizedModule.h>
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematicsCppAd.h>
@@ -126,6 +127,28 @@ namespace ocs2::legged_robot
         problem_ptr_->costPtr->add("baseTrackingCost", getBaseTrackingCost(task_file, centroidal_model_info_, verbose));
 
         // Constraint terms
+        const auto getJointPositionLimitsConstraint = [this]()
+        {
+            const auto& model = pinocchio_interface_ptr_->getModel();
+            const Eigen::Index jointStateOffset =
+                static_cast<Eigen::Index>(centroidal_model_info_.stateDim - centroidal_model_info_.actuatedDofNum);
+            const Eigen::Index jointDim = static_cast<Eigen::Index>(centroidal_model_info_.actuatedDofNum);
+            const vector_t lowerBound = model.lowerPositionLimit.tail(jointDim);
+            const vector_t upperBound = model.upperPositionLimit.tail(jointDim);
+
+            vector_t h(2 * jointDim);
+            h << -lowerBound, upperBound;
+            matrix_t f = matrix_t::Zero(2 * jointDim, centroidal_model_info_.stateDim);
+            f.block(0, jointStateOffset, jointDim, jointDim).setIdentity();
+            f.block(jointDim, jointStateOffset, jointDim, jointDim) =
+                -matrix_t::Identity(jointDim, jointDim);
+            return std::make_unique<LinearStateConstraint>(std::move(h), std::move(f));
+        };
+        problem_ptr_->stateInequalityConstraintPtr->add(
+            "jointPositionLimits", getJointPositionLimitsConstraint());
+        problem_ptr_->finalInequalityConstraintPtr->add(
+            "jointPositionLimits", getJointPositionLimitsConstraint());
+
         // friction cone settings
         scalar_t frictionCoefficient = 0.7;
         RelaxedBarrierPenalty::Config barrierPenaltyConfig;
