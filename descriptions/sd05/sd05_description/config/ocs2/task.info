@@ -58,7 +58,7 @@ mpc
 {
   timeHorizon                     1.0  ; [s]
   solutionTimeWindow              -1   ; maximum [s]
-  coldStart                       true
+  coldStart                       false
 
   debugPrint                      false
 
@@ -105,8 +105,8 @@ Q
   scaling 1e+0
 
   ;; Normalized Centroidal Momentum: [linear, angular] ;;
-  (0,0)   150.0    ; vcom_x
-  (1,1)   150.0    ; vcom_y
+  (0,0)   15.0     ; vcom_x
+  (1,1)   15.0     ; vcom_y
   (2,2)   100.0    ; vcom_z
   (3,3)   10.0     ; L_x / robotMass
   (4,4)   30.0     ; L_y / robotMass

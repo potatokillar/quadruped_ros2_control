@@ -31,8 +31,8 @@ trot
  {
    modeSequence
    {
-     [0]     RF_LH
-     [1]     LF_RH
+     [0]     LF_RH
+     [1]     RF_LH
    }
    switchingTimes
    {
