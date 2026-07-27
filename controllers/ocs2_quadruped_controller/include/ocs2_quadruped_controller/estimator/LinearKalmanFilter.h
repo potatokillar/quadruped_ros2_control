@@ -10,6 +10,7 @@
 #include <ocs2_pinocchio_interface/PinocchioEndEffectorKinematics.h>
 
 #include <tf2_ros/transform_broadcaster.h>
+#include <std_msgs/msg/float64_multi_array.hpp>
 
 namespace ocs2::legged_robot {
     class KalmanFilterEstimate final : public StateEstimateBase {
@@ -45,5 +46,9 @@ namespace ocs2::legged_robot {
 
         matrix_t a_, b_, c_, q_, p_, r_;
         vector_t xHat_, ps_, vs_;
+
+        // Debug: publishes contact flags, foot velocity observations (vs_) and
+        // estimated base velocity on every update for drift diagnosis.
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr debug_pub_;
     };
 }

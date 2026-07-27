@@ -50,6 +50,8 @@ namespace ocs2::legged_robot {
 
         ee_kinematics_->setPinocchioInterface(pinocchio_interface_);
         initPublishers();
+        debug_pub_ = node_->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "ocs2_quadruped_controller/kalman_debug", 10);
     }
 
     vector_t KalmanFilterEstimate::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
@@ -151,6 +153,22 @@ namespace ocs2::legged_robot {
         //  }
 
         updateLinear(xHat_.segment<3>(0), xHat_.segment<3>(3));
+
+        // Debug output: [contact_flag x4, vs_ x12, xHat base velocity x3].
+        if (debug_pub_->get_subscription_count() > 0) {
+            std_msgs::msg::Float64MultiArray debug_msg;
+            debug_msg.data.reserve(numContacts_ + dimContacts_ + 3);
+            for (int i = 0; i < numContacts_; ++i) {
+                debug_msg.data.push_back(contact_flag_[i] ? 1.0 : 0.0);
+            }
+            for (int i = 0; i < dimContacts_; ++i) {
+                debug_msg.data.push_back(vs_(i));
+            }
+            for (int i = 0; i < 3; ++i) {
+                debug_msg.data.push_back(xHat_(3 + i));
+            }
+            debug_pub_->publish(debug_msg);
+        }
 
         auto odom = getOdomMsg();
         odom.header.stamp = time;

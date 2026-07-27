@@ -22,6 +22,7 @@
   <depend>ocs2_self_collision</depend>
   <depend>ocs2_legged_robot_ros</depend>
   <depend>angles</depend>
+  <depend>std_msgs</depend>
   <depend>boost</depend>
 
   <test_depend>ament_lint_auto</test_depend>

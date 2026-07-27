@@ -25,6 +25,7 @@ set(CONTROLLER_INCLUDE_DEPENDS
         ocs2_msgs
         angles
         nav_msgs
+        std_msgs
         qpoases_colcon
         ament_index_cpp
 
