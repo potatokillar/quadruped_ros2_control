@@ -115,6 +115,10 @@ namespace ocs2::legged_robot {
         std::string odom_name_;
         std::vector<std::string> odom_interface_types_;
 
+        std::string control_input_source_ = "topic";
+        std::string control_input_name_ = "control_input";
+        std::vector<std::string> control_input_interface_types_ = {"command", "lx", "ly", "rx", "ry"};
+
         rclcpp::Subscription<control_input_msgs::msg::Inputs>::SharedPtr control_input_subscription_;
         std::shared_ptr<realtime_tools::RealtimePublisher<control_msgs::msg::DynamicJointState>>
             command_telemetry_publisher_;

@@ -4,10 +4,14 @@
 	<ros2_control name="UnitreeSystem" type="system">
 
 		<hardware>
-			<plugin>hardware_unitree_mujoco/HardwareUnitree</plugin>
-<!--			<param name="domain">0</param>-->
-<!--			<param name="network_interface">enp46s0</param>-->
-<!--			<param name="show_foot_force">true</param>-->
+			<xacro:if value="${'$(arg HARDWARE_MODE)' == 'mujoco'}">
+				<plugin>hardware_unitree_mujoco/HardwareUnitree</plugin>
+			</xacro:if>
+			<xacro:if value="${'$(arg HARDWARE_MODE)' == 'real'}">
+				<plugin>robot_hardware_adapter/RobotHardwareAdapter</plugin>
+				<!-- 机器人 TOML 由真机启动入口统一选择，硬件模块不得各自读取配置文件。 -->
+				<param name="robot_config_path">$(arg ROBOT_CONFIG)</param>
+			</xacro:if>
 		</hardware>
 
 		<joint name="FR_hip_joint">
@@ -167,21 +171,34 @@
 			<state_interface name="linear_acceleration.z"/>
 		</sensor>
 
-		<sensor name="foot_force">
-			<state_interface name="FR"/>
-			<state_interface name="FL"/>
-			<state_interface name="RR"/>
-			<state_interface name="RL"/>
-		</sensor>
+		<xacro:if value="${'$(arg HARDWARE_MODE)' == 'real'}">
+			<sensor name="control_input">
+				<state_interface name="command"/>
+				<state_interface name="lx"/>
+				<state_interface name="ly"/>
+				<state_interface name="rx"/>
+				<state_interface name="ry"/>
+			</sensor>
+		</xacro:if>
 
-		<sensor name="odometer">
-			<state_interface name="position.x"/>
-			<state_interface name="position.y"/>
-			<state_interface name="position.z"/>
-			<state_interface name="velocity.x"/>
-			<state_interface name="velocity.y"/>
-			<state_interface name="velocity.z"/>
-		</sensor>
+		<!-- 足端力和真值里程计只来自仿真，真机不得声明不存在的硬件接口。 -->
+		<xacro:if value="${'$(arg HARDWARE_MODE)' == 'mujoco'}">
+			<sensor name="foot_force">
+				<state_interface name="FR"/>
+				<state_interface name="FL"/>
+				<state_interface name="RR"/>
+				<state_interface name="RL"/>
+			</sensor>
+
+			<sensor name="odometer">
+				<state_interface name="position.x"/>
+				<state_interface name="position.y"/>
+				<state_interface name="position.z"/>
+				<state_interface name="velocity.x"/>
+				<state_interface name="velocity.y"/>
+				<state_interface name="velocity.z"/>
+			</sensor>
+		</xacro:if>
 
 	</ros2_control>
 

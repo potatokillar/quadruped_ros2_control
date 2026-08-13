@@ -71,12 +71,33 @@ namespace ocs2::legged_robot
                 conf.names.push_back(foot_force_name_ + "/" += interface_type);
             }
         }
+        if (control_input_source_ == "adapter")
+        {
+            for (const auto& interface_type : control_input_interface_types_)
+            {
+                conf.names.push_back(control_input_name_ + "/" + interface_type);
+            }
+        }
         return conf;
     }
 
     controller_interface::return_type Ocs2QuadrupedController::update(const rclcpp::Time& time,
                                                                       const rclcpp::Duration& period)
     {
+        if (control_input_source_ == "adapter" &&
+            ctrl_interfaces_.control_input_state_interface_.size() == control_input_interface_types_.size())
+        {
+            ctrl_interfaces_.control_inputs_.command = static_cast<int32_t>(
+                ctrl_interfaces_.control_input_state_interface_[0].get().get_value());
+            ctrl_interfaces_.control_inputs_.lx = static_cast<float>(
+                ctrl_interfaces_.control_input_state_interface_[1].get().get_value());
+            ctrl_interfaces_.control_inputs_.ly = static_cast<float>(
+                ctrl_interfaces_.control_input_state_interface_[2].get().get_value());
+            ctrl_interfaces_.control_inputs_.rx = static_cast<float>(
+                ctrl_interfaces_.control_input_state_interface_[3].get().get_value());
+            ctrl_interfaces_.control_inputs_.ry = static_cast<float>(
+                ctrl_interfaces_.control_input_state_interface_[4].get().get_value());
+        }
         ctrl_comp_->updateState(time, period);
 
         if (mode_ == FSMMode::NORMAL)
@@ -176,6 +197,16 @@ namespace ocs2::legged_robot
             foot_force_interface_types_ =
                 auto_declare<std::vector<std::string>>("foot_force_interfaces", state_interface_types_);
         }
+        control_input_source_ = auto_declare<std::string>("control_input_source", control_input_source_);
+        if (control_input_source_ != "adapter" && control_input_source_ != "topic")
+        {
+            RCLCPP_ERROR(get_node()->get_logger(),
+                         "control_input_source must be either 'adapter' or 'topic'");
+            return CallbackReturn::ERROR;
+        }
+        control_input_name_ = auto_declare<std::string>("control_input_name", control_input_name_);
+        control_input_interface_types_ = auto_declare<std::vector<std::string>>(
+            "control_input_interfaces", control_input_interface_types_);
         ctrl_comp_ = std::make_shared<CtrlComponent>(get_node(), ctrl_interfaces_);
         ctrl_comp_->setupStateEstimate(estimator_type_);
 
@@ -190,16 +221,14 @@ namespace ocs2::legged_robot
     controller_interface::CallbackReturn Ocs2QuadrupedController::on_configure(
         const rclcpp_lifecycle::State& /*previous_state*/)
     {
-        control_input_subscription_ = get_node()->create_subscription<control_input_msgs::msg::Inputs>(
-            "/control_input", 10, [this](const control_input_msgs::msg::Inputs::SharedPtr msg)
-            {
-                // Handle message
-                ctrl_interfaces_.control_inputs_.command = msg->command;
-                ctrl_interfaces_.control_inputs_.lx = msg->lx;
-                ctrl_interfaces_.control_inputs_.ly = msg->ly;
-                ctrl_interfaces_.control_inputs_.rx = msg->rx;
-                ctrl_interfaces_.control_inputs_.ry = msg->ry;
-            });
+        if (control_input_source_ == "topic")
+        {
+            control_input_subscription_ = get_node()->create_subscription<control_input_msgs::msg::Inputs>(
+                "/control_input", 10, [this](const control_input_msgs::msg::Inputs::SharedPtr msg)
+                {
+                    ctrl_interfaces_.control_inputs_ = *msg;
+                });
+        }
 
         auto command_publisher = get_node()->create_publisher<control_msgs::msg::DynamicJointState>(
             "~/joint_commands", 10);
@@ -244,6 +273,11 @@ namespace ocs2::legged_robot
             {
                 ctrl_interfaces_.imu_state_interface_.emplace_back(interface);
             }
+            else if (control_input_source_ == "adapter" &&
+                     interface.get_prefix_name() == control_input_name_)
+            {
+                ctrl_interfaces_.control_input_state_interface_.emplace_back(interface);
+            }
             else if (contact_state_source_ == "foot_force" &&
                      interface.get_prefix_name() == foot_force_name_)
             {
@@ -257,6 +291,13 @@ namespace ocs2::legged_robot
             {
                 state_interface_map_[interface.get_interface_name()]->push_back(interface);
             }
+        }
+        if (control_input_source_ == "adapter" &&
+            ctrl_interfaces_.control_input_state_interface_.size() != control_input_interface_types_.size())
+        {
+            RCLCPP_ERROR(get_node()->get_logger(),
+                         "Adapter control input interface count does not match configuration");
+            return CallbackReturn::ERROR;
         }
 
         current_state_ = state_list_.passive;

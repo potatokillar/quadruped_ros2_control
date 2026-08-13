@@ -94,6 +94,15 @@ ocs2_quadruped_controller:
     # 真机没有足端力传感器，使用 GaitSchedule 的规划支撑状态。
     # 后续按 docs/contact_estimation_without_foot_force.md 升级为多源接触估计。
     contact_state_source: "planned"
+    # 真机控制输入统一由 RobotHardwareAdapter 以 ROS2 Control 状态接口提供。
+    control_input_source: "adapter"
+    control_input_name: "control_input"
+    control_input_interfaces:
+      - command
+      - lx
+      - ly
+      - rx
+      - ry
 #    default_kd: 3.5
     joints:
       - FL_hip_joint

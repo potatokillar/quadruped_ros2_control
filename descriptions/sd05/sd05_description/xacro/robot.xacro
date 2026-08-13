@@ -7,6 +7,14 @@
   <xacro:arg name="LOW_POLY_VISUALS" default="true"/>
   <xacro:arg name="SIMPLIFIED_VISUALS" default="false"/>
   <xacro:arg name="FIXED_BASE" default="false"/>
+  <!--
+    ros2_control 后端只由启动入口选择：
+      mujoco：保持现有仿真插件和仿真专有传感器；
+      real：使用新项目的真机硬件适配器。
+    ROBOT_CONFIG 仅在 real 模式使用，路径由真机 bringup 统一传入。
+  -->
+  <xacro:arg name="HARDWARE_MODE" default="mujoco"/>
+  <xacro:arg name="ROBOT_CONFIG" default=""/>
 
   <xacro:if value="$(arg FIXED_BASE)">
     <link name="world"/>
