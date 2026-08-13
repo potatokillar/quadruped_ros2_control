@@ -64,11 +64,13 @@ namespace ocs2::legged_robot
                 conf.names.push_back(odom_name_ + "/" += interface_type);
             }
         }
-        for (const auto& interface_type : foot_force_interface_types_)
+        if (contact_state_source_ == "foot_force")
         {
-            conf.names.push_back(foot_force_name_ + "/" += interface_type);
+            for (const auto& interface_type : foot_force_interface_types_)
+            {
+                conf.names.push_back(foot_force_name_ + "/" += interface_type);
+            }
         }
-
         return conf;
     }
 
@@ -160,11 +162,20 @@ namespace ocs2::legged_robot
             odom_name_ = auto_declare<std::string>("odom_name", odom_name_);
             odom_interface_types_ = auto_declare<std::vector<std::string>>("odom_interfaces", state_interface_types_);
         }
-        // Foot Force Sensor
-        foot_force_name_ = auto_declare<std::string>("foot_force_name", foot_force_name_);
-        foot_force_interface_types_ =
-            auto_declare<std::vector<std::string>>("foot_force_interfaces", state_interface_types_);
-
+        // Contact State Source
+        contact_state_source_ = auto_declare<std::string>("contact_state_source", contact_state_source_);
+        if (contact_state_source_ != "planned" && contact_state_source_ != "foot_force")
+        {
+            RCLCPP_ERROR(get_node()->get_logger(),
+                         "contact_state_source must be either 'planned' or 'foot_force'");
+            return CallbackReturn::ERROR;
+        }
+        if (contact_state_source_ == "foot_force")
+        {
+            foot_force_name_ = auto_declare<std::string>("foot_force_name", foot_force_name_);
+            foot_force_interface_types_ =
+                auto_declare<std::vector<std::string>>("foot_force_interfaces", state_interface_types_);
+        }
         ctrl_comp_ = std::make_shared<CtrlComponent>(get_node(), ctrl_interfaces_);
         ctrl_comp_->setupStateEstimate(estimator_type_);
 
@@ -233,7 +244,8 @@ namespace ocs2::legged_robot
             {
                 ctrl_interfaces_.imu_state_interface_.emplace_back(interface);
             }
-            else if (interface.get_prefix_name() == foot_force_name_)
+            else if (contact_state_source_ == "foot_force" &&
+                     interface.get_prefix_name() == foot_force_name_)
             {
                 ctrl_interfaces_.foot_force_state_interface_.emplace_back(interface);
             }

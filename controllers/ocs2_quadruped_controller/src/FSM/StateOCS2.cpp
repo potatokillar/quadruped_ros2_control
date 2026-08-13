@@ -81,6 +81,8 @@ namespace ocs2::legged_robot
                                                             ctrl_component_->observation_.state,
                                                             optimized_state_,
                                                             optimized_input_, planned_mode);
+        // 保存本周期 MRT 规划模式，供下一控制周期的状态估计使用。
+        ctrl_component_->planned_mode_ = planned_mode;
 
         // Whole body control
         ctrl_component_->observation_.input = optimized_input_;
@@ -296,6 +298,8 @@ namespace ocs2::legged_robot
 
     void StateOCS2::exit()
     {
+        // 离开 OCS2 后按四足支撑处理，避免残留上一时刻的 trot 接触模式。
+        ctrl_component_->planned_mode_ = STANCE;
     }
 
     FSMStateName StateOCS2::checkChange()

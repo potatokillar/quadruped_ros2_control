@@ -167,6 +167,29 @@ class Sd05WalkTest(Node):
 
         return accumulated
 
+    def move(self, phase, linear_x, linear_y):
+        """按机身坐标系速度执行单个平移测试，并返回世界坐标系位移。"""
+        start_x, start_y, _, _, _, _ = self.current_state()
+        twist = Twist()
+        twist.linear.x = linear_x
+        twist.linear.y = linear_y
+        print(
+            f"Moving {phase}: vx={linear_x:+.2f} m/s, vy={linear_y:+.2f} m/s "
+            f"for {self.args.move_duration:.1f} s.",
+            flush=True,
+        )
+        self.publish_for(self.args.move_duration, twist, phase)
+        self.publish_for(self.args.stop_time, Twist(), f"{phase}_stop")
+        end_x, end_y, _, _, _, _ = self.current_state()
+        dx = end_x - start_x
+        dy = end_y - start_y
+        print(
+            f"{phase} completed: dx={dx:+.3f} m, dy={dy:+.3f} m, "
+            f"displacement={math.hypot(dx, dy):.3f} m.",
+            flush=True,
+        )
+        return dx, dy
+
     def switch_to_stance(self):
         print("Switching OCS2 gait to stance and holding zero velocity.", flush=True)
         self.publish_for(1.0, Twist(), "stance", command=2)
@@ -188,19 +211,12 @@ class Sd05WalkTest(Node):
         self.initialize_ocs2()
         self.switch_to_trot()
 
-        start_x, start_y, _, _, _, _ = self.current_state()
-        forward = Twist()
-        forward.linear.x = self.args.forward_speed
-        print(
-            f"Moving forward at {self.args.forward_speed:.2f} m/s "
-            f"for {self.args.forward_duration:.1f} s.",
-            flush=True,
-        )
-        self.publish_for(self.args.forward_duration, forward, "forward")
-        end_x, end_y, _, _, _, _ = self.current_state()
-
-        print(f"Holding zero velocity for {self.args.stop_time:.1f} s.", flush=True)
-        self.publish_for(self.args.stop_time, Twist(), "stop")
+        displacement_results = {
+            "forward": self.move("forward", self.args.linear_speed, 0.0),
+            "backward": self.move("backward", -self.args.linear_speed, 0.0),
+            "left": self.move("left", 0.0, self.args.linear_speed),
+            "right": self.move("right", 0.0, -self.args.linear_speed),
+        }
 
         print(
             f"Rotating {self.args.turn_degrees:.1f} deg at "
@@ -210,9 +226,12 @@ class Sd05WalkTest(Node):
         turned = self.rotate()
         self.switch_to_stance()
 
-        displacement = math.hypot(end_x - start_x, end_y - start_y)
+        displacement_text = ", ".join(
+            f"{name}={math.hypot(dx, dy):.3f} m"
+            for name, (dx, dy) in displacement_results.items()
+        )
         print(
-            f"Test completed: forward displacement={displacement:.3f} m, "
+            f"Test completed: {displacement_text}, "
             f"accumulated rotation={math.degrees(turned):.1f} deg.",
             flush=True,
         )
@@ -220,19 +239,19 @@ class Sd05WalkTest(Node):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run the SD05 OCS2 forward-and-turn simulation test."
+        description="Run the SD05 OCS2 multidirectional walking and rotation simulation test."
     )
-    parser.add_argument("--forward-duration", type=float, default=10.0)
-    parser.add_argument("--forward-speed", type=float, default=0.15)
+    parser.add_argument("--move-duration", type=float, default=4.0)
+    parser.add_argument("--linear-speed", type=float, default=0.10)
     parser.add_argument("--turn-degrees", type=float, default=720.0)
     parser.add_argument("--yaw-speed", type=float, default=0.35)
     parser.add_argument("--settle-time", type=float, default=5.0)
     parser.add_argument("--stop-time", type=float, default=2.0)
     args = parser.parse_args()
-    if args.forward_duration <= 0.0 or args.settle_time <= 0.0 or args.stop_time < 0.0:
+    if args.move_duration <= 0.0 or args.settle_time <= 0.0 or args.stop_time < 0.0:
         parser.error("durations must be positive (stop-time may be zero)")
-    if args.forward_speed <= 0.0:
-        parser.error("forward-speed must be positive")
+    if args.linear_speed <= 0.0:
+        parser.error("linear-speed must be positive")
     if args.yaw_speed <= 0.0:
         parser.error("yaw-speed must be positive")
     if args.turn_degrees == 0.0:

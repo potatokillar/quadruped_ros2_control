@@ -28,11 +28,16 @@ namespace ocs2::legged_robot
 
         virtual void updateJointStates();
 
-        virtual void updateContact();
+        /**
+         * @brief 按配置的数据来源更新当前四足接触状态。
+         * @param planned_mode MRT 上一控制周期输出的规划接触模式。
+         */
+        virtual void updateContact(size_t planned_mode);
 
         virtual void updateImu();
 
-        virtual vector_t update(const rclcpp::Time& time, const rclcpp::Duration& period) = 0;
+        virtual vector_t update(const rclcpp::Time& time, const rclcpp::Duration& period,
+                                size_t planned_mode) = 0;
 
         [[nodiscard]] size_t getMode() const { return stanceLeg2ModeNumber(contact_flag_); }
 
@@ -49,6 +54,7 @@ namespace ocs2::legged_robot
         CentroidalModelInfo info_;
 
         contact_flag_t contact_flag_{};
+        std::string contact_state_source_ = "foot_force";
         double feet_force_threshold_ = 5.0;
 
         vector3_t zyx_offset_ = vector3_t::Zero();

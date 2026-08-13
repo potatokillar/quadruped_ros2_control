@@ -23,11 +23,12 @@ namespace ocs2::legged_robot {
             });
     }
 
-    vector_t FromOdomTopic::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
+    vector_t FromOdomTopic::update(const rclcpp::Time &time, const rclcpp::Duration & /*period*/,
+                                   const size_t planned_mode) {
         nav_msgs::msg::Odometry odom = *buffer_.readFromRT();
 
         updateJointStates();
-        updateContact();
+        updateContact(planned_mode);
         updateAngular(quatToZyx(Eigen::Quaternion(
                           odom.pose.pose.orientation.w,
                           odom.pose.pose.orientation.x,

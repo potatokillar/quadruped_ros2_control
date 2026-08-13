@@ -16,7 +16,8 @@ namespace ocs2::legged_robot
         FromOdomTopic(CentroidalModelInfo info, CtrlInterfaces& ctrl_component,
                       const rclcpp_lifecycle::LifecycleNode::SharedPtr& node);
 
-        vector_t update(const rclcpp::Time& time, const rclcpp::Duration& period) override;
+        vector_t update(const rclcpp::Time& time, const rclcpp::Duration& period,
+                        size_t planned_mode) override;
 
     protected:
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;

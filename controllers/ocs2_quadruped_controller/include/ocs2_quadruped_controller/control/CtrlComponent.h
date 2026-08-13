@@ -48,6 +48,8 @@ namespace ocs2::legged_robot
 
         SystemObservation observation_;
         vector_t measured_rbd_state_;
+        // 状态估计使用 MRT 上一控制周期输出的规划模式；非 OCS2 状态保持 STANCE。
+        size_t planned_mode_ = STANCE;
         std::atomic_bool mpc_running_{};
 
         bool verbose_ = false;

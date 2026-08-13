@@ -9,6 +9,7 @@
 #include <ocs2_robotic_tools/common/RotationDerivativesTransforms.h>
 
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 namespace ocs2::legged_robot
@@ -20,6 +21,15 @@ namespace ocs2::legged_robot
           info_(std::move(info)),
           rbd_state_(vector_t::Zero(2 * info_.generalizedCoordinatesNum)), node_(std::move(node))
     {
+        if (!node_->has_parameter("contact_state_source")) {
+            node_->declare_parameter("contact_state_source", contact_state_source_);
+        }
+        contact_state_source_ = node_->get_parameter("contact_state_source").as_string();
+        if (contact_state_source_ != "planned" && contact_state_source_ != "foot_force") {
+            throw std::invalid_argument(
+                "contact_state_source must be either 'planned' or 'foot_force'");
+        }
+
         if (!node_->has_parameter("feet_force_threshold")) {
             node_->declare_parameter("feet_force_threshold", feet_force_threshold_);
         }
@@ -41,14 +51,24 @@ namespace ocs2::legged_robot
         rbd_state_.segment(6 + info_.generalizedCoordinatesNum, info_.actuatedDofNum) = joint_vel;
     }
 
-    void StateEstimateBase::updateContact()
+    void StateEstimateBase::updateContact(const size_t planned_mode)
     {
-        const size_t size = ctrl_component_.foot_force_state_interface_.size();
-        for (int i = 0; i < size; i++)
+        if (contact_state_source_ == "foot_force")
         {
-            contact_flag_[i] = ctrl_component_.foot_force_state_interface_[i].get().get_value() >
-                feet_force_threshold_;
+            const size_t size = ctrl_component_.foot_force_state_interface_.size();
+            for (size_t i = 0; i < size; ++i)
+            {
+                contact_flag_[i] = ctrl_component_.foot_force_state_interface_[i].get().get_value() >
+                    feet_force_threshold_;
+            }
+            return;
         }
+
+        // 当前阶段没有足端力传感器，复用 MRT 已安全传入控制线程的规划模式。
+        // 这里使用上一控制周期的模式，避免状态估计器直接访问并修改 GaitSchedule。
+        // TODO: 按 docs/contact_estimation_without_foot_force.md 融合电机电流与位置跟踪误差，
+        //       修正规划状态无法识别的提前触地、踩空和打滑。
+        contact_flag_ = modeNumber2StanceLeg(planned_mode);
     }
 
     void StateEstimateBase::updateImu()

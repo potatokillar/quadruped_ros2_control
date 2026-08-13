@@ -102,7 +102,7 @@ namespace ocs2::legged_robot
     void CtrlComponent::updateState(const rclcpp::Time& time, const rclcpp::Duration& period)
     {
         // Update State Estimation
-        measured_rbd_state_ = estimator_->update(time, period);
+        measured_rbd_state_ = estimator_->update(time, period, planned_mode_);
         observation_.time += period.seconds();
         const scalar_t yaw_last = observation_.state(9);
         observation_.state = rbd_conversions_->computeCentroidalStateFromRbdModel(measured_rbd_state_);

@@ -54,9 +54,10 @@ namespace ocs2::legged_robot {
             "ocs2_quadruped_controller/kalman_debug", 10);
     }
 
-    vector_t KalmanFilterEstimate::update(const rclcpp::Time &time, const rclcpp::Duration &period) {
+    vector_t KalmanFilterEstimate::update(const rclcpp::Time &time, const rclcpp::Duration &period,
+                                          const size_t planned_mode) {
         updateJointStates();
-        updateContact();
+        updateContact(planned_mode);
         updateImu();
 
         scalar_t dt = period.seconds();
